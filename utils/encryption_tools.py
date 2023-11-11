@@ -105,7 +105,7 @@ def get_password_hash(password: str) -> str:
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # Example usage:
     try:
         # Never store real password in our application (only the hash)
