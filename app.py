@@ -25,7 +25,7 @@ app.config['SQLALCHEMY_BINDS'] = {
     'chat_db': 'sqlite:///database/chat.db'
 }
 
-# Initialize separate SQLAlchemy instances for each database
+# Initialize SQLAlchemy instance
 db.init_app(app)
 
 
