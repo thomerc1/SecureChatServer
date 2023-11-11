@@ -6,12 +6,24 @@ Python Flask Server with encrypted messaging
 
 ## Structure
 .<br>
-├── app.py<br>
+├── app.py <br>
+├── config<br>
+│   ├── server_config.py<br>
+│   └── server_state.json<br>
+├── database<br>
+│   └── models.py<br>
+├── instance<br>
 ├── README.md<br>
-├── static/<br>
-├── templates/<br>
+├── resource<br>
+│   └── stored_hash.txt<br>
+├── static<br>
+│   └── home.css<br>
+├── templates<br>
+│   ├── chat.html<br>
 │   └── home.html<br>
-└── utils/<br>
+├── test<br>
+└── utils<br>
+    └── encryption_tools.py<br>
 
 ## Notes
 - Encryption / Decryption Password: enter1the2chat3room4
