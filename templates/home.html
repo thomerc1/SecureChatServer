@@ -1,19 +1,59 @@
+<!--
+    ==========================================
+    Course Name: CMSC495 7384
+    Author: Eric Thomas
+    Group: A
+    Date: Nov 23'
+    Project: CMSC495 Secure Chat Server
+    Platform: Debian Linux
+    ==========================================
+    Description:
+    This HTML template defines the structure and content of the home page
+    for a Secure Messaging Server. It includes toggle switches for enabling
+    SSH authentication and SHA-256 encryption, as well as buttons for
+    various actions.
+    ==========================================
+-->
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-    </style>
+
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
 </head>
+
 <body>
+
+    <!-- Main content of the page -->
     <h1>Secure Messaging Server</h1>
     <p>Multi-user encrypted messaging server</p>
+
+    <!-- Toggle switches for SSH authentication and SHA-256 encryption -->
+    <label class="toggle-label">Enable SSH Authentication:</label>
+    <label class="toggle-switch">
+        <input type="checkbox" class="toggle-input">
+        <span class="toggle-slider"></span>
+    </label>
+
+    <!-- Select an action: buttons -->
+    <label class="toggle-label">Enable SHA-256 Encryption:</label>
+    <label class="toggle-switch">
+        <input type="checkbox" class="toggle-input">
+        <span class="toggle-slider"></span>
+    </label>
+
+    <br>
+
+    <p>Select an action:</p>
+
+    <button>Add SSH Key</button>
+    <button>Enter Chat Page</button>
+    <button>User Add / Login</button>
 </body>
+
 </html>
