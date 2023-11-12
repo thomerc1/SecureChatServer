@@ -45,7 +45,7 @@ class ServerConfig:
         Returns:
             NoReturn
         """
-        self.config_filename = "config.json"
+        self.config_filename = os.path.join(os.path.dirname(__file__), "config.json")
         self.config = {}
         self.load_config()
 
@@ -63,8 +63,12 @@ class ServerConfig:
             with open(self.config_filename, "r") as config_file:
                 self.config = json.load(config_file)
         except FileNotFoundError:
-            # Handle the case where the file doesn't exist yet
-            # Sets the config values to False using the @property functions
+            # If no config established, set default values and save the config
+            self.config = {
+                self.PASSWORD_HASH_KEY: self.DEFAULT_PASSWORD_HASH,
+                self.SSH_ENABLED_KEY: self.DEFAULT_SSH_ENABLED,
+                self.ENCRYPTION_ENABLED_KEY: self.DEFAULT_ENC_ENABLED
+            }
             self.save_config()
 
     @property

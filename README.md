@@ -48,4 +48,13 @@ Python Flask Server with encrypted messaging
 | Test failure to authenticate prevents access             | TBD           | TBD    | TBD  |
 
 
+## TESTS
+
+| TEST                                                      | POC         | Status |
+| --------------------------------------------------------- | ----------- | ------ |
+| app.py - home()                                           | Eric Thomas | TBD    |
+| 1. Verify default settings of ssh and encryption switches | Eric Thomas | TBD    |
+| 2. Verify that settings are non-volatile                  | Eric Thomas | TBD    |
+
+
 
