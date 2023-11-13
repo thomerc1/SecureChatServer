@@ -2,7 +2,6 @@
 Course Name: CMSC495 7384
 Project: CMSC495 Secure Chat Server
 Group: A
-Author: Eric Thomas
 Date: Nov 23'
 Platform: Debian Linux
 Dependency: Python 3.10 +
@@ -12,8 +11,6 @@ Secure Chat Server Database Models
 
 This module defines the SQLAlchemy models for the Secure Chat Server application.
 It includes the UsersModel and ChatModel classes for storing user and chat information.
-
-Author: Group A
 
 Dependencies:
 - Flask-SQLAlchemy
@@ -26,13 +23,7 @@ db = SQLAlchemy()
 
 class UsersModel(db.Model):
     """
-    Model for storing user information.
-
-    Fields:
-    - id: Primary key for the user record.
-    - username: User's username. MAX 50 chars
-    - authenticated: Boolean indicating whether the user successfully entered the encryption password.
-    - ssh_key_setup: Boolean indicating whether the user has set up an SSH key.
+    SQLAlchemy Model for storing user information.
     """
 
     __tablename__ = "users"
@@ -43,20 +34,39 @@ class UsersModel(db.Model):
     authenticated = db.Column(db.Boolean, default=False)
     ssh_key_setup = db.Column(db.Boolean, default=False)
 
-    def __init__(self, username, authenticated=False, ssh_key_setup=False):
+    def __init__(self, username: str, authenticated: bool = False, ssh_key_setup: bool = False) -> None:
+        """
+        Author:
+            Eric Thomas
+
+        Description:
+            Constructor for UsersModel.
+
+        Args:
+            username (str): The username of the user.
+            authenticated (bool, optional): User's authentication status. Defaults to False.
+            ssh_key_setup (bool, optional): User's SSH key setup status. Defaults to False.
+        """
         self.username = username
         self.authenticated = authenticated
         self.ssh_key_setup = ssh_key_setup
 
     @staticmethod
-    def add_user(username, authenticated=False, ssh_key_setup=False):
+    def add_user(username: str, authenticated: bool = False, ssh_key_setup: bool = False) -> NoReturn:
         """
-        Add a new user to the database.
+        Author:
+            Eric Thomas
+
+        Description:
+            Static method to add a new user to the database.
 
         Args:
-            username (str): The username of the new user.
-            authenticated (bool, optional): Whether the user is authenticated (default is False).
-            ssh_key_setup (bool, optional): Whether the user has set up an SSH key (default is False).
+            username (str): Username of the new user.
+            authenticated (bool, optional): Authentication status. Defaults to False.
+            ssh_key_setup (bool, optional): SSH key setup status. Defaults to False.
+
+        Raises:
+            Exception: If any database operation fails.
         """
         try:
             new_user = UsersModel(username=username, authenticated=authenticated, ssh_key_setup=ssh_key_setup)
@@ -68,12 +78,16 @@ class UsersModel(db.Model):
             raise e
 
     @staticmethod
-    def is_authenticated(username):
+    def is_authenticated(username: str) -> bool:
         """
-        Check if a user with the given username has been authenticated.
+        Author:
+            Eric Thomas
+
+        Description:
+            Static method to check if a user is authenticated.
 
         Args:
-            username (str): The username to check.
+            username (str): Username to check for authentication.
 
         Returns:
             bool: True if the user is authenticated, False otherwise.
@@ -82,12 +96,16 @@ class UsersModel(db.Model):
         return user is not None and user.authenticated
 
     @staticmethod
-    def has_uploaded_ssh_key(username):
+    def has_uploaded_ssh_key(username: str) -> bool:
         """
-        Check if a user with the given username has uploaded an SSH key.
+        Author:
+            Eric Thomas
+
+        Description:
+            Static method to check if a user has uploaded an SSH key.
 
         Args:
-            username (str): The username to check.
+            username (str): Username to check for SSH key upload.
 
         Returns:
             bool: True if the user has uploaded an SSH key, False otherwise.
@@ -98,6 +116,8 @@ class UsersModel(db.Model):
 
 class ChatModel(db.Model):
     """
+    Author: Eric Thomas
+
     Model for storing chat information.
 
     Fields:
