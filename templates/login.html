@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Secure Chat Server</h1>
+    <p>User Login and Account Creation page</p>
+
+    <form action="/user_action" method="post">
+        <div class="form-group">
+            <label for="username">Enter your username:</label>
+            <input type="text" id="username" name="username" placeholder="Username" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Enter the encryption pw:</label>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+        </div>
+
+        <div class="button-group">
+            <button type="submit" class="btn" name="action" value="login">Login</button>
+            <button type="submit" class="btn" name="action" value="add_user">Add User</button>
+            <button type="submit" class="btn" name="action" value="logout">Log out</button>
+            <button type="button" class="btn btn-danger" name="action" value="delete_user">Delete User</button>
+        </div>
+    </form>
+
+
+    <!-- Flash message(s) -->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message[1] }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+</body>
+
+</html>

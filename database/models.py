@@ -150,6 +150,54 @@ class UsersModel(db.Model):
         user = UsersModel.query.filter_by(username=username).first()
         return True if user is not None else False
 
+    @staticmethod
+    def set_ssh_key_setup(app: Flask, username: str, ssh_key_setup: bool) -> None:
+        """
+        Static method to set the SSH key setup status for a user.
+
+        Args:
+            app (Flask): The Flask application instance.
+            username (str): Username of the user to update.
+            ssh_key_setup (bool): The new SSH key setup status.
+
+        Returns:
+            None
+        """
+        try:
+            with app.app_context():
+                user = UsersModel.query.filter_by(username=username).first()
+                if user:
+                    user.ssh_key_setup = ssh_key_setup
+                    db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            # TODO: Handle the exception here (e.g., log the error)
+            traceback.print_exc()
+
+    @staticmethod
+    def set_logged_in(app: Flask, username: str, logged_in: bool) -> None:
+        """
+        Static method to set the logged-in status for a user.
+
+        Args:
+            app (Flask): The Flask application instance.
+            username (str): Username of the user to update.
+            logged_in (bool): The new logged-in status.
+
+        Returns:
+            None
+        """
+        try:
+            with app.app_context():
+                user = UsersModel.query.filter_by(username=username).first()
+                if user:
+                    user.logged_in = logged_in
+                    db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            # TODO: Handle the exception here (e.g., log the error)
+            traceback.print_exc()
+
 
 class ChatModel(db.Model):
     """
@@ -186,17 +234,17 @@ if __name__ == '__main__':
     server_config = ServerConfig()
     server_config.load_config()
     server_config.print_params()
-    print(f"Max Username Length: {server_config.max_username_length}")
-    print(f"Max Message Length: {server_config.max_message_length}")
-
-    # Example usage for UsersModel class
-    user1 = UsersModel(username="user1")
-    user2 = UsersModel(username="user7", logged_in=True)
-    user3 = UsersModel(username="user8", ssh_key_setup=True)
+    print(f"Max Username Length: {server_config.max_username_length()}")
+    print(f"Max Message Length: {server_config.max_message_length()}")
 
     # Adding users to the database
     with app.app_context():
         db.create_all()
+
+    # Example usage for UsersModel class
+    user1 = UsersModel(username="user1")
+    user2 = UsersModel(username="user7")
+    user3 = UsersModel(username="user8")
 
     UsersModel.add_user(app, user1)
     UsersModel.add_user(app, user2)
@@ -205,14 +253,25 @@ if __name__ == '__main__':
     with app.app_context():
 
         # Check if a user exists
-        username_to_check = "user1"
-        if UsersModel.user_exists(app, username_to_check):
-            print(f"{username_to_check} exists in the database.")
+        username_to_update = "user1"
+        user = UsersModel.query.filter_by(username=username_to_update).first()
+        if user:
 
-        # Check if a user is logged_in
-        if UsersModel.is_logged_in(app, username_to_check):
-            print(f"{username_to_check} is logged_in.")
+            # Print user settings
+            print(f"Username: {user.username}")
+            print(f"SSH Key Setup: {user.ssh_key_setup}")
+            print(f"Logged In: {user.logged_in}")
 
-        # Check if a user has uploaded an SSH key
-        if UsersModel.has_uploaded_ssh_key(app, username_to_check):
-            print(f"{username_to_check} has uploaded an SSH key.")
+            # Set ssh_key_setup to True for the user
+            UsersModel.set_ssh_key_setup(app, username_to_update, True)
+            user.logged_in = True
+
+            # Set logged_in to True for the user
+            UsersModel.set_logged_in(app, username_to_update, True)
+
+            # Print settings again
+            print(f"Username: {user.username}")
+            print(f"SSH Key Setup: {user.ssh_key_setup}")
+            print(f"Logged In: {user.logged_in}")
+        else:
+            print(f"User {username_to_update} not found.")

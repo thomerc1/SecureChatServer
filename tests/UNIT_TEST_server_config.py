@@ -21,7 +21,10 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # import sources to test
+# autopep8: off
 from config.server_config import ServerConfig
+# autopep8: on
+
 
 class TestServerConfig(unittest.TestCase):
     def setUp(self):

@@ -21,7 +21,10 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # import sources to test
+# autopep8: off
 from utils.encryption_tools import encrypt_data_with_password, decrypt_data_with_password, get_password_hash
+# autopep8: on
+
 
 class TestEncryptionTools(unittest.TestCase):
     def test_password_hash(self):
@@ -43,6 +46,7 @@ class TestEncryptionTools(unittest.TestCase):
         decrypted_data = decrypt_data_with_password(encrypted_data, password).decode('utf-8')
 
         self.assertEqual(original_data, decrypted_data)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

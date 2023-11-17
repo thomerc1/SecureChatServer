@@ -27,27 +27,37 @@ Functions:
 """
 from flask import Flask, render_template, session, redirect, url_for, request, jsonify, flash
 from database.models import db, UsersModel
+from utils.encryption_tools import get_password_hash
 from config.server_config import ServerConfig
 from flask_sqlalchemy import SQLAlchemy
+import os
+
+# Get current working directory
+cwd = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 
 # Set a secret key for your application
-app.secret_key = 'I still dont understand the secret key...'
+app.secret_key = 'Bizarre implementation of this function.'
 
 # Configure the default database URI
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database/users.db'
-
-# Configure a second database URI with a separate bind name
-app.config['SQLALCHEMY_BINDS'] = {
-    'chat_db': 'sqlite:///database/chat.db'
-}
+database_uri = 'sqlite:///' + os.path.join(cwd, 'database', 'server.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 
 # Initialize SQLAlchemy instance
 db.init_app(app)
 
+with app.app_context():
+    db.create_all()
+
 # Instantiate the server configuration
 server_config = ServerConfig()
+
+# Max users
+MAX_USER_COUNT = 3
+
+# users currently logged in
+active_user_count = 0
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -72,7 +82,7 @@ def home():
     ssh_key_uploaded = False
     user_session = False
     if 'username' in session:
-        user_session = True
+        user_session = UsersModel.user_exists(app, session['username'])
         authentication = UsersModel.is_authenticated(session['username'])
         ssh_key_uploaded = UsersModel.has_uploaded_ssh_key(session['username'])
 
@@ -84,7 +94,7 @@ def home():
         if 'add_ssh_key' in request.form:
             return redirect(url_for('ssh_key_loader'))
         elif 'user_auth' in request.form:
-            return redirect(url_for('user_auth'))
+            return redirect(url_for('user_action'))
         elif 'enter_chat' in request.form:
             if verify_permissions():
                 return redirect(url_for('chat'))
@@ -101,23 +111,87 @@ def home():
     return render_template('home.html', authentication=authentication, ssh_key_uploaded=ssh_key_uploaded, server_config=server_config, error_message=error_message)
 
 
-@app.route('/user_auth')
-def user_auth():
-    """
-    Author: 
-        Eric Thomas
+@app.route('/user_action', methods=['GET', 'POST'])
+def user_action():
+    global active_user_count
 
-    Description:
-        Renders the user authentication page.
+    if request.method == 'POST':
+        # Get username and password from the form
+        username = request.form['username']
+        print(f"USERNAME: x-{username}-x")
+        password = request.form['password']
+        action = request.form.get('action')
 
-        This is an endpoint resolution function that is used for account creation or 
-        user authentication, which is necessary for when encryption is enabled.
-        After successful login or user creation, it redirects back to the home page.
+        # Check if the username exists in the database
+        existing_user = UsersModel.query.filter_by(username=username).first()
+        password_match = (get_password_hash(password) == server_config.password_hash)
 
-    Returns:
-        render_template: The rendered user authentication page template.
-    """
-    return render_template('user_auth.html')
+        # If validated
+        if ((action != 'logout') and
+                (not password_match)):  # username limits controlled by html
+            # flash('Invalid password', 'error')
+            return render_template('login.html')
+
+        # If logging in
+        if action == 'login':
+
+            # If chat not full
+            if MAX_USER_COUNT <= active_user_count:
+                flash('Chat room is full. Please try again later', 'error')
+                return render_template('login.html')
+
+            # If user exist
+            if existing_user:
+                flash('Logged in', 'success')
+                session['username'] = username
+                existing_user.logged_in = True
+                active_user_count += 1
+                return render_template('login.html')
+                # TODO: re-enable route below
+                # return redirect(url_for('home'))
+
+        # If adding user
+        if action == 'add_user':
+            if existing_user:
+                flash('User exists', 'error')
+                return render_template('login.html')
+            else:
+                new_user = UsersModel(username=username)
+                UsersModel.add_user(app, new_user)
+                flash(f'User account created for: {username}. You may now login!')
+                return render_template('login.html')
+
+        # User logout
+        if action == 'logout':
+            if 'username' in session:
+                # TODO: update for database
+                # user.logged_in = False
+                # db.session.commit()
+                session.pop('username', None)
+                active_user_count -= 1
+                # flash('You have been logged out.', 'success')
+                return render_template('login.html')
+            else:
+                flash(f'Username {username} does not have an active session.')
+                return render_template('login.html')
+
+        # Delete user
+        if action == 'delete_user':
+            if 'username' in session:
+                session.pop('username', None)
+                existing_user.logged_in = False
+                # TODO: update for database
+                # user.logged_in = False
+                # db.session.commit()
+                session.pop('username', None)
+                active_user_count -= 1
+                # flash('You have been logged out.', 'success')
+                return render_template('login.html')
+            else:
+                flash(f'Username {username} does not have an active session.')
+                return render_template('login.html')
+
+    return render_template('login.html')
 
 
 @app.route('/ssh_key_loader')
