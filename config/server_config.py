@@ -26,8 +26,8 @@ class ServerConfig:
     Server Configuration used by the application.
     """
 
-    MAX_USERNAME_LENGTH = 50
-    MAX_MESSAGE_LENGTH = 255
+    __MAX_USERNAME_LENGTH = 50
+    __MAX_MESSAGE_LENGTH = 255
     DEFAULT_SSH_ENABLED = False
     DEFAULT_ENC_ENABLED = False
     DEFAULT_PASSWORD_HASH = 'c5b29c08b4df41903c2df399298a4112bc6a67619d1a3ad901e0377d3fa1c18e'
@@ -165,8 +165,8 @@ class ServerConfig:
         self.config[self.ENCRYPTION_ENABLED_KEY] = value
         self.save_config()
 
-    @property
-    def max_username_length(self) -> int:
+    @staticmethod
+    def max_username_length() -> int:
         """
         Retrieve the maximum allowed length for usernames.
 
@@ -176,10 +176,10 @@ class ServerConfig:
         Returns:
             int: Maximum allowed length for usernames.
         """
-        return self.MAX_USERNAME_LENGTH
+        return ServerConfig.__MAX_USERNAME_LENGTH
 
-    @property
-    def max_message_length(self) -> int:
+    @staticmethod
+    def max_message_length() -> int:
         """
         Retrieve the maximum allowed length for chat messages.
 
@@ -189,7 +189,24 @@ class ServerConfig:
         Returns:
             int: Maximum allowed length for chat messages.
         """
-        return self.MAX_MESSAGE_LENGTH
+        return ServerConfig.__MAX_MESSAGE_LENGTH
+
+    def print_params(self) -> NoReturn:
+        """
+        Print the current server configuration parameters.
+
+        Args:
+            None
+
+        Returns:
+            NoReturn
+        """
+        print("Current Server Configuration:")
+        print(f"SSH Enabled: {self.ssh_enabled}")
+        print(f"Encryption Enabled: {self.encryption_enabled}")
+        print(f"Max Username Length: {ServerConfig.__MAX_USERNAME_LENGTH}")
+        print(f"Max Message Length: {ServerConfig.__MAX_MESSAGE_LENGTH}")
+        print(f"Password Hash: {self.password_hash}")
 
 
 if __name__ == '__main__':
