@@ -16,43 +16,57 @@ Dependencies:
 - Flask-SQLAlchemy
 """
 
+# Append the source dirs to the Python Path
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Integer, String, Boolean
+from sqlalchemy.orm import Mapped, mapped_column
+import traceback
+import sys
+import os
+from typing import NoReturn
+from sqlalchemy.orm import DeclarativeBase
 
-db = SQLAlchemy()
+# append system path and import utils
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# autopep8: off
+from utils.encryption_tools import get_password_hash
+from config.server_config import ServerConfig
+# autopep8: on
+
+#############################################################################
+# SqlAlchemy setup per:
+# https://flask-sqlalchemy.palletsprojects.com/en/3.1.x/quickstart/#initialize-the-extension
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+db = SQLAlchemy(model_class=Base)
 
 
 class UsersModel(db.Model):
     """
-    SQLAlchemy Model for storing user information.
+    Author:
+        Eric Thomas
+
+    Description:
+        SQLAlchemy Model for storing user information.
+
+    Notes: 
+        Models in python are very confusing. Each model defines the "columns" in your database.
+        However, each instance of the model is a row in your database. 
     """
 
     __tablename__ = "users"
-    __bind_key__ = "users_db"
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    authenticated = db.Column(db.Boolean, default=False)
-    ssh_key_setup = db.Column(db.Boolean, default=False)
-
-    def __init__(self, username: str, authenticated: bool = False, ssh_key_setup: bool = False) -> None:
-        """
-        Author:
-            Eric Thomas
-
-        Description:
-            Constructor for UsersModel.
-
-        Args:
-            username (str): The username of the user.
-            authenticated (bool, optional): User's authentication status. Defaults to False.
-            ssh_key_setup (bool, optional): User's SSH key setup status. Defaults to False.
-        """
-        self.username = username
-        self.authenticated = authenticated
-        self.ssh_key_setup = ssh_key_setup
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(ServerConfig.max_username_length()), unique=True, nullable=False)
+    logged_in: Mapped[bool] = mapped_column(Boolean, default=False)
+    ssh_key_setup: Mapped[bool] = mapped_column(Boolean, default=False)
 
     @staticmethod
-    def add_user(username: str, authenticated: bool = False, ssh_key_setup: bool = False) -> NoReturn:
+    def add_user(app: Flask, user: 'UsersModel') -> NoReturn:
         """
         Author:
             Eric Thomas
@@ -61,42 +75,43 @@ class UsersModel(db.Model):
             Static method to add a new user to the database.
 
         Args:
-            username (str): Username of the new user.
-            authenticated (bool, optional): Authentication status. Defaults to False.
-            ssh_key_setup (bool, optional): SSH key setup status. Defaults to False.
+            app (Flask): The Flask application instance.
+            user (UsersModel): An instance of UsersModel representing the new user.
 
         Raises:
             Exception: If any database operation fails.
         """
         try:
-            new_user = UsersModel(username=username, authenticated=authenticated, ssh_key_setup=ssh_key_setup)
-            db.session.add(new_user)
-            db.session.commit()
+            with app.app_context():
+                if not UsersModel.query.filter_by(username=user.username).first():
+                    db.session.add(user)
+                    db.session.commit()
         except Exception as e:
             db.session.rollback()
             # TODO: Handle the exception here (e.g., log the error)
-            raise e
+            traceback.print_exc()
 
     @staticmethod
-    def is_authenticated(username: str) -> bool:
+    def is_logged_in(app: Flask, username: str) -> bool:
         """
         Author:
             Eric Thomas
 
         Description:
-            Static method to check if a user is authenticated.
+            Static method to check if a user is logged_in.
 
         Args:
+            app (Flask): The Flask application instance.
             username (str): Username to check for authentication.
 
         Returns:
-            bool: True if the user is authenticated, False otherwise.
+            bool: True if the user is logged_in, False otherwise.
         """
         user = UsersModel.query.filter_by(username=username).first()
-        return user is not None and user.authenticated
+        return user is not None and user.logged_in
 
     @staticmethod
-    def has_uploaded_ssh_key(username: str) -> bool:
+    def has_uploaded_ssh_key(app: Flask, username: str) -> bool:
         """
         Author:
             Eric Thomas
@@ -105,6 +120,7 @@ class UsersModel(db.Model):
             Static method to check if a user has uploaded an SSH key.
 
         Args:
+            app (Flask): The Flask application instance.
             username (str): Username to check for SSH key upload.
 
         Returns:
@@ -113,23 +129,45 @@ class UsersModel(db.Model):
         user = UsersModel.query.filter_by(username=username).first()
         return user is not None and user.ssh_key_setup
 
+    @staticmethod
+    def user_exists(app: Flask, username: str) -> bool:
+        """
+        Author:
+            Eric Thomas
+
+        Description:
+            Static method to verify if a user exists.
+
+        Args:
+            app (Flask): The Flask application instance. 
+            username (str): Username to check the existance of.
+
+        Returns:
+            bool: True if exists, else False
+
+        """
+
+        user = UsersModel.query.filter_by(username=username).first()
+        return True if user is not None else False
+
 
 class ChatModel(db.Model):
     """
-    Author: Eric Thomas
-
     Model for storing chat information.
 
     Fields:
     - id: Primary key for the chat record.
     - message: The chat message.
+    - |user | message | message_id |
     """
 
+    """
     __tablename__ = "chat"
     __bind_key__ = "chat_db"
+    """
 
     id = db.Column(db.Integer, primary_key=True)
-    message = db.Column(db.String(255), nullable=False)
+    message = db.Column(db.String(ServerConfig.max_message_length()), nullable=False)
 
     def __init__(self, message):
         self.message = message
@@ -138,32 +176,43 @@ class ChatModel(db.Model):
 if __name__ == '__main__':
     # Example usage for ServerConfig class
     from config.server_config import ServerConfig
+    from flask import Flask
+    from flask_sqlalchemy import SQLAlchemy
 
-    server_config = ServerConfig(ssh_enabled=True, encryption_enabled=True)
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+    db.init_app(app)
+
+    server_config = ServerConfig()
+    server_config.load_config()
     server_config.print_params()
-    print(f"Max Username Length: {server_config.get_max_username_length()}")
-    print(f"Max Message Length: {server_config.get_max_message_length()}")
+    print(f"Max Username Length: {server_config.max_username_length}")
+    print(f"Max Message Length: {server_config.max_message_length}")
 
     # Example usage for UsersModel class
     user1 = UsersModel(username="user1")
-    user2 = UsersModel(username="user2", authenticated=True)
-    user3 = UsersModel(username="user3", ssh_key_setup=True)
+    user2 = UsersModel(username="user7", logged_in=True)
+    user3 = UsersModel(username="user8", ssh_key_setup=True)
 
     # Adding users to the database
-    db.session.add(user1)
-    db.session.add(user2)
-    db.session.add(user3)
-    db.session.commit()
+    with app.app_context():
+        db.create_all()
 
-    # Check if a user exists
-    username_to_check = "user1"
-    if UsersModel.user_exists(username_to_check):
-        print(f"{username_to_check} exists in the database.")
+    UsersModel.add_user(app, user1)
+    UsersModel.add_user(app, user2)
+    UsersModel.add_user(app, user3)
 
-    # Check if a user is authenticated
-    if UsersModel.is_authenticated(username_to_check):
-        print(f"{username_to_check} is authenticated.")
+    with app.app_context():
 
-    # Check if a user has uploaded an SSH key
-    if UsersModel.has_uploaded_ssh_key(username_to_check):
-        print(f"{username_to_check} has uploaded an SSH key.")
+        # Check if a user exists
+        username_to_check = "user1"
+        if UsersModel.user_exists(app, username_to_check):
+            print(f"{username_to_check} exists in the database.")
+
+        # Check if a user is logged_in
+        if UsersModel.is_logged_in(app, username_to_check):
+            print(f"{username_to_check} is logged_in.")
+
+        # Check if a user has uploaded an SSH key
+        if UsersModel.has_uploaded_ssh_key(app, username_to_check):
+            print(f"{username_to_check} has uploaded an SSH key.")
