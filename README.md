@@ -51,22 +51,23 @@ Python Flask Server with encrypted messaging
   
 ## TODO
 
-| REQUIREMENT                                              | POC           | Status | Test |
-| -------------------------------------------------------- | ------------- | ------ | ---- |
-| Basic Project Structure                                  | Eric Thomas   | Done   | TBD  |
-| Login / Authentication Webpage (HTML)                    | Eric Thomas   | Done   | TBD  |
-| Login / Authentication Backend                           | Eric Thomas   | Done   | TBD  |
-| Basic SHA packet encryption / decryption functions       | Eric Thomas   | Done   | TBD  |
-| Message packetization                                    | TBD           | TBD    | TBD  |
-| Message presentation                                     | TBD           | TBD    | TBD  |
-| Multi-user data contention prevention (shared resources) | TBD           | TBD    | TBD  |
-| Primary chat front-end (HTML)                            | Duncan/Nathan | TBD    | TBD  |
-| Primary chat back-end (sqlalchemy?)                      | Duncan/Nathan | TBD    | TBD  |
-| Primary chat back-end (flask support for sql?)           | TBD           | TBD    | TBD  |
-| Test - Test on phone                                     | TBD           | TBD    | TBD  |
-| Test - multi users (up to 5?)                            | TBD           | TBD    | TBD  |
-| Test - on PC                                             | TBD           | TBD    | TBD  |
-| Test failure to authenticate prevents access             | TBD           | TBD    | TBD  |
+| REQUIREMENT                                              | POC           | Status                                  | Test |
+| -------------------------------------------------------- | ------------- | --------------------------------------- | ---- |
+| Basic Project Structure                                  | Eric Thomas   | Done                                    | TBD  |
+| Homepage / landing page                                  | Eric Thomas   | Done                                    | TBD  |
+| Login / Authentication Webpage (HTML)                    | Eric Thomas   | Done                                    | TBD  |
+| Login / Authentication Backend                           | Eric Thomas   | Done                                    | TBD  |
+| Basic SHA packet encryption / decryption functions       | Eric Thomas   | Done                                    | TBD  |
+| Message packetization                                    | TBD           | TBD                                     | TBD  |
+| Message presentation                                     | TBD           | TBD                                     | TBD  |
+| Multi-user data contention prevention (shared resources) | TBD           | TBD                                     | TBD  |
+| Primary chat front-end (HTML)                            | Duncan/Nathan | TBD                                     | TBD  |
+| Database support (sqlalchemy)                            | Eric Thomas   | User Table complete, chat table started | TBD  |
+| Primary chat back-end (flask support for sql?)           | TBD           | TBD                                     | TBD  |
+| Test - Test on phone                                     | Eric Thomas   | Complete                                | TBD  |
+| Test - multi users (up to 3)                             | Eric Thomas   | Complete                                | TBD  |
+| Test - on PC                                             | Eric Thomas   | Complete                                | TBD  |
+| Test failure to authenticate prevents access             | Eric Thomas   | Complete                                | TBD  |
 
 
 ## TESTS

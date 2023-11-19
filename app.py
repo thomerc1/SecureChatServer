@@ -30,7 +30,7 @@ cwd = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 
 # Set a secret key for your application
-app.secret_key = 'Bizarre implementation of this function.'
+app.secret_key = os.urandom(24)
 
 # Configure the default database URI
 database_uri = 'sqlite:///' + os.path.join(cwd, 'database', 'server.db')
@@ -78,6 +78,8 @@ def home():
         logged_in = UsersModel.is_logged_in(app, session['username'])
         ssh_key_uploaded = UsersModel.has_uploaded_ssh_key(app, session['username'])
 
+    global active_user_count
+
     # Init function vars
     error_message = ""
 
@@ -102,7 +104,7 @@ def home():
                 if server_config.encryption_enabled and not authentication:
                     error_message += "Encryption is enabled, but you haven't authenticated.<br>"
 
-    return render_template('home.html', logged_in=logged_in, ssh_key_uploaded=ssh_key_uploaded, server_config=server_config, error_message=error_message)
+    return render_template('home.html', logged_in=logged_in, ssh_key_uploaded=ssh_key_uploaded, server_config=server_config, error_message=error_message, active_user_count=active_user_count, max_user_count=MAX_USER_COUNT)
 
 
 @app.route('/user_action', methods=['GET', 'POST'])
@@ -318,5 +320,7 @@ def verify_permissions():
 
 
 if __name__ == '__main__':
+    # Log all users out on startup
+    UsersModel.set_all_users_logged_out(app)
     app.run(debug=True)
     # app.run(host="192.168.1.122", port=8080, debug=True)

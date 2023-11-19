@@ -258,6 +258,31 @@ class UsersModel(db.Model):
             # TODO: Handle the exception here (e.g., log the error)
             traceback.print_exc()
 
+    @staticmethod
+    def set_all_users_logged_out(app: Flask) -> NoReturn:
+        """
+        Author:
+            Eric Thomas
+
+        Description:
+            Static method to set the logged_in status to False for all
+            users in the database.
+
+        Args:
+            app (Flask): The Flask application instance.
+
+        Returns:
+            NoReturn
+        """
+        with app.app_context():
+            # Get all users from the database
+            users = UsersModel.query.all()
+
+            # Update the logged_in status for each user to False
+            for user in users:
+                user.logged_in = False
+            db.session.commit()
+
 
 class ChatModel(db.Model):
     """
