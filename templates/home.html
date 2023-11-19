@@ -34,6 +34,7 @@
     <!-- Main content of the page -->
     <h1>Secure Chat Server</h1>
     <h3>Multi-user encrypted server home page</h3>
+    <p><i><b>Version:</b></i> {{ version }}</p>
 
 
     <!-- Jinja2 Conditionals -->
@@ -56,6 +57,7 @@
     <p><i><b>SSH Key:</b></i> SSH Key Not Uploaded</p>
     {% endif %}
     <p><i><b>Active Users:</b></i> {{ active_user_count }} of {{ max_user_count }}</p>
+
 
     <!-- Separator -->
     <hr>

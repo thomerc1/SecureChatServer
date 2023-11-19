@@ -46,8 +46,23 @@ class ServerConfig:
             NoReturn
         """
         self.config_filename = os.path.join(os.path.dirname(__file__), "config.json")
+        self.version_filename = os.path.join(os.path.dirname(__file__), "version.txt")
+        self._version = self._load_version()
         self.config = {}
         self.load_config()
+
+    def _load_version(self) -> str:
+        """
+        Read the version from and return the first 7 characters (expected to be a git hash)
+
+        Returns:
+            str: The version string (first 7 characters) if file exists, else "none"
+        """
+        try:
+            with open(self.version_filename, "r") as version_file:
+                return version_file.read().strip()[:7]
+        except Exception:
+            return "none"
 
     def load_config(self) -> NoReturn:
         """
@@ -70,6 +85,19 @@ class ServerConfig:
                 self.ENCRYPTION_ENABLED_KEY: self.DEFAULT_ENC_ENABLED
             }
             self.save_config()
+
+    @property
+    def version(self) -> str:
+        """
+        Get the software suite version.
+
+        Args:
+            None
+
+        Returns:
+            str: The version.
+        """
+        return self._version
 
     @property
     def password_hash(self) -> str:
@@ -224,6 +252,7 @@ if __name__ == '__main__':
     print(f"Max Username Length: {server_config.max_username_length}")
     print(f"Max Message Length: {server_config.max_message_length}")
     print(f"Password hash: {server_config.password_hash}")
+    print(f"Version: {server_config.version}")
 
     # Update the config
     server_config.ssh_enabled = True
@@ -242,6 +271,7 @@ if __name__ == '__main__':
     print(f"Max Username Length: {server_config.max_username_length}")
     print(f"Max Message Length: {server_config.max_message_length}")
     print(f"Password hash: {server_config.password_hash}")
+    print(f"Version: {server_config.version}")
 
     # Delete the test config file
     try:

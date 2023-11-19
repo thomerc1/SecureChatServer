@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Author: Eric Thomas
+# CMSC495 7384
+# Group: A
+# Date: Nov 23'
+# Platform: Debian Linux
+
+# Get the absolute path to the root of the Git repository
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Construct the absolute path to config/versions.txt
+VERSION_FILE="${REPO_ROOT}/config/versions.txt"
+
+# Now you can use $VERSION_FILE as the absolute path to versions.txt
+# Example: Writing the commit hash to versions.txt
+COMMIT_HASH=$(git rev-parse --short HEAD)
+echo $COMMIT_HASH > "$VERSION_FILE"
+
+# Add versions.txt to the staging area
+git add "$VERSION_FILE"

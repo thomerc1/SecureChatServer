@@ -104,7 +104,8 @@ def home():
                 if server_config.encryption_enabled and not authentication:
                     error_message += "Encryption is enabled, but you haven't authenticated.<br>"
 
-    return render_template('home.html', logged_in=logged_in, ssh_key_uploaded=ssh_key_uploaded, server_config=server_config, error_message=error_message, active_user_count=active_user_count, max_user_count=MAX_USER_COUNT)
+    return render_template('home.html', logged_in=logged_in, ssh_key_uploaded=ssh_key_uploaded, server_config=server_config, error_message=error_message,
+                           active_user_count=active_user_count, max_user_count=MAX_USER_COUNT, version=server_config.version)
 
 
 @app.route('/user_action', methods=['GET', 'POST'])
