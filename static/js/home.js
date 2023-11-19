@@ -40,7 +40,7 @@ function updateEncryption() {
     });
 }
 
-// Add an event listener to execute updateSSH and updateEncryption when the DOM is loaded
+// Event listener to execute updateSSH and updateEncryption when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     const sshSwitch = document.getElementById('ssh-switch');
     sshSwitch.addEventListener('change', updateSSH);

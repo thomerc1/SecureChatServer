@@ -15,15 +15,7 @@ Dependencies:
 Usage:
 - Run 'pip install Flask Flask-SQLAlchemy' to install dependencies.
 - python3 app.py <-- to run the application
-
-Functions:
-- verify_permissions: Checks user permissions based on server configurations.
-- home: Renders the home page and handles user actions.
-- user_auth: Renders the user authentication page.
-- ssh_key_loader: Renders the page for SSH key uploading.
-- chat: Renders the chat interface.
-- update_ssh: Handles updates to SSH configuration via POST requests.
-- update_encryption: Handles updates to encryption settings via POST requests.
+- apt install python3.10-venv
 """
 from flask import Flask, render_template, session, redirect, url_for, request, jsonify, flash
 from database.models import db, UsersModel
@@ -78,16 +70,18 @@ def home():
     """
 
     # Set authentication value
-    authentication = False
+    logged_in = False
     ssh_key_uploaded = False
-    user_session = False
+    user_entry = False
     if 'username' in session:
-        user_session = UsersModel.user_exists(app, session['username'])
-        authentication = UsersModel.is_authenticated(session['username'])
-        ssh_key_uploaded = UsersModel.has_uploaded_ssh_key(session['username'])
+        user_entry = UsersModel.user_exists(app, session['username'])
+        logged_in = UsersModel.is_logged_in(app, session['username'])
+        ssh_key_uploaded = UsersModel.has_uploaded_ssh_key(app, session['username'])
 
     # Init function vars
     error_message = ""
+
+    print(f"Logged in: {logged_in}")
 
     # React to user action button selection
     if request.method == 'POST':
@@ -101,36 +95,55 @@ def home():
             else:
                 # Create the error message(s)
                 error_message += f"Please resolve the following permissions errors to access the chat page:<br>"
-                if not user_session:
+                if not user_entry:
                     error_message += f"Create a username or login if you have one.<br>"
                 if server_config.ssh_enabled and not ssh_key_uploaded:
                     error_message += "SSH is enabled, but you haven't enabled SSH for your account.<br>"
                 if server_config.encryption_enabled and not authentication:
                     error_message += "Encryption is enabled, but you haven't authenticated.<br>"
 
-    return render_template('home.html', authentication=authentication, ssh_key_uploaded=ssh_key_uploaded, server_config=server_config, error_message=error_message)
+    return render_template('home.html', logged_in=logged_in, ssh_key_uploaded=ssh_key_uploaded, server_config=server_config, error_message=error_message)
 
 
 @app.route('/user_action', methods=['GET', 'POST'])
 def user_action():
+    """
+    Author:
+        Eric Thomas
+
+    Description:
+        Function handles user actions such as login, adding a new user,
+        user logout, and user deletion. It processes the incoming POST request,
+        validates user information, and performs the requested action based on
+        the 'action' parameter in the form data.
+
+    Returns:
+        Response: A Flask Response object containing the appropriate HTML
+        template to render based on the user action.
+
+    Global Variables:
+        - active_user_count (int): Tracks the number of active users.
+          It is incremented when a user logs in and decremented when they log out.
+    """
+
     global active_user_count
 
     if request.method == 'POST':
         # Get username and password from the form
         username = request.form['username']
-        print(f"USERNAME: x-{username}-x")
         password = request.form['password']
         action = request.form.get('action')
 
         # Check if the username exists in the database
-        existing_user = UsersModel.query.filter_by(username=username).first()
+        user = None
+        if (UsersModel.user_exists(app, username)):
+            user = UsersModel.get_user_entry(app, username)
         password_match = (get_password_hash(password) == server_config.password_hash)
 
         # If validated
-        if ((action != 'logout') and
-                (not password_match)):  # username limits controlled by html
-            # flash('Invalid password', 'error')
-            return render_template('login.html')
+        if not password_match:  # username limits controlled by html
+            flash('Invalid password', 'error')
+            return render_template('user_action.html')
 
         # If logging in
         if action == 'login':
@@ -138,60 +151,60 @@ def user_action():
             # If chat not full
             if MAX_USER_COUNT <= active_user_count:
                 flash('Chat room is full. Please try again later', 'error')
-                return render_template('login.html')
+                return render_template('user_action.html')
 
             # If user exist
-            if existing_user:
-                flash('Logged in', 'success')
+            if user:
                 session['username'] = username
-                existing_user.logged_in = True
+                UsersModel.set_logged_in(app, username, True)
                 active_user_count += 1
-                return render_template('login.html')
-                # TODO: re-enable route below
-                # return redirect(url_for('home'))
+                return redirect(url_for('home'))
+            else:
+                flash(f'Username: {username} does not exist. Please add user.')
+                return render_template('user_action.html')
 
         # If adding user
         if action == 'add_user':
-            if existing_user:
+            if user:
                 flash('User exists', 'error')
-                return render_template('login.html')
+                return render_template('user_action.html')
             else:
                 new_user = UsersModel(username=username)
                 UsersModel.add_user(app, new_user)
                 flash(f'User account created for: {username}. You may now login!')
-                return render_template('login.html')
+                return render_template('user_action.html')
 
         # User logout
         if action == 'logout':
             if 'username' in session:
-                # TODO: update for database
-                # user.logged_in = False
-                # db.session.commit()
                 session.pop('username', None)
+                UsersModel.set_logged_in(app, username, False)
                 active_user_count -= 1
-                # flash('You have been logged out.', 'success')
-                return render_template('login.html')
+                flash(f'User {username} has been logged out.', 'success')
+                return render_template('user_action.html')
             else:
                 flash(f'Username {username} does not have an active session.')
-                return render_template('login.html')
+                return render_template('user_action.html')
 
         # Delete user
         if action == 'delete_user':
-            if 'username' in session:
-                session.pop('username', None)
-                existing_user.logged_in = False
-                # TODO: update for database
-                # user.logged_in = False
-                # db.session.commit()
-                session.pop('username', None)
-                active_user_count -= 1
-                # flash('You have been logged out.', 'success')
-                return render_template('login.html')
-            else:
-                flash(f'Username {username} does not have an active session.')
-                return render_template('login.html')
+            if UsersModel.user_exists(app, username):
 
-    return render_template('login.html')
+                # Remove database entry for user
+                UsersModel.remove_user(app, username)
+
+                # Pop if in an active flask session
+                if 'username' in session:
+                    session.pop('username', None)
+                    active_user_count -= 1
+
+                flash(f'User account {username} has been deleted.', 'success')
+                return render_template('user_action.html')
+            else:
+                flash(f'Username {username} does not have an account.')
+                return render_template('user_action.html')
+
+    return render_template('user_action.html')
 
 
 @app.route('/ssh_key_loader')
@@ -291,13 +304,13 @@ def verify_permissions():
         # If server config has ssh enabled
         if server_config.ssh_enabled:
             # Check if user has entered the encryption password
-            if (UsersModel.has_uploaded_ssh_key(session['username']) == False):
+            if not UsersModel.has_uploaded_ssh_key(app, session['username']):
                 return False
 
         # If the server config has encryption enabled
         if server_config.encryption_enabled:
             # Check if encryption is enabled and if the user is authenticated
-            if (UsersModel.is_authenticated(session['username']) == False):
+            if not UsersModel.is_logged_in(app, session['username']):
                 return False
 
     # If function made it to this point, permissions are satisfied
@@ -306,3 +319,4 @@ def verify_permissions():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    # app.run(host="192.168.1.122", port=8080, debug=True)

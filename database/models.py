@@ -9,7 +9,7 @@ Dependency: Python 3.10 +
 Description:
 Secure Chat Server Database Models
 
-This module defines the SQLAlchemy models for the Secure Chat Server application.
+This module defines the SQLAlchemy models (tables) for the Secure Chat Server application.
 It includes the UsersModel and ChatModel classes for storing user and chat information.
 
 Dependencies:
@@ -92,6 +92,33 @@ class UsersModel(db.Model):
             traceback.print_exc()
 
     @staticmethod
+    def remove_user(app: Flask, username: str) -> None:
+        """
+        Author:
+            Eric Thomas
+
+        Description:
+            Remove a user from the database by their username.
+
+        Args:
+            app (Flask): The Flask application instance.
+            username (str): The username of the user to remove.
+
+        Returns:
+            None
+        """
+        try:
+            with app.app_context():
+                user = UsersModel.query.filter_by(username=username).first()
+                if user:
+                    db.session.delete(user)
+                    db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            # TODO: Handle the exception here (e.g., log the error)
+            traceback.print_exc()
+
+    @staticmethod
     def is_logged_in(app: Flask, username: str) -> bool:
         """
         Author:
@@ -107,7 +134,8 @@ class UsersModel(db.Model):
         Returns:
             bool: True if the user is logged_in, False otherwise.
         """
-        user = UsersModel.query.filter_by(username=username).first()
+        with app.app_context():
+            user = UsersModel.query.filter_by(username=username).first()
         return user is not None and user.logged_in
 
     @staticmethod
@@ -126,8 +154,32 @@ class UsersModel(db.Model):
         Returns:
             bool: True if the user has uploaded an SSH key, False otherwise.
         """
-        user = UsersModel.query.filter_by(username=username).first()
+
+        with app.app_context():
+            user = UsersModel.query.filter_by(username=username).first()
         return user is not None and user.ssh_key_setup
+
+    @staticmethod
+    def get_user_entry(app: Flask, username: str) -> bool:
+        """
+        Author:
+            Eric Thomas
+
+        Description:
+            Retrieve a user's database entry by username.
+
+        Args:
+            app (Flask): The Flask application instance.
+            username (str): Username to check for SSH key upload.
+
+        Returns:
+            UsersModel or None: Database entry for the user if found, else None.
+
+        """
+
+        with app.app_context():
+            user = UsersModel.query.filter_by(username=username).first()
+        return user
 
     @staticmethod
     def user_exists(app: Flask, username: str) -> bool:
@@ -146,14 +198,18 @@ class UsersModel(db.Model):
             bool: True if exists, else False
 
         """
-
-        user = UsersModel.query.filter_by(username=username).first()
+        with app.app_context():
+            user = UsersModel.query.filter_by(username=username).first()
         return True if user is not None else False
 
     @staticmethod
     def set_ssh_key_setup(app: Flask, username: str, ssh_key_setup: bool) -> None:
         """
-        Static method to set the SSH key setup status for a user.
+        Author:
+            Eric Thomas
+
+        Description:
+            Static method to set the SSH key setup status for a user.
 
         Args:
             app (Flask): The Flask application instance.
@@ -177,7 +233,11 @@ class UsersModel(db.Model):
     @staticmethod
     def set_logged_in(app: Flask, username: str, logged_in: bool) -> None:
         """
-        Static method to set the logged-in status for a user.
+        Author:
+            Eric Thomas
+
+        Description:
+            Static method to set the logged-in status for a user.
 
         Args:
             app (Flask): The Flask application instance.
@@ -226,6 +286,7 @@ if __name__ == '__main__':
     from config.server_config import ServerConfig
     from flask import Flask
     from flask_sqlalchemy import SQLAlchemy
+    import shutil
 
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -243,35 +304,60 @@ if __name__ == '__main__':
 
     # Example usage for UsersModel class
     user1 = UsersModel(username="user1")
-    user2 = UsersModel(username="user7")
-    user3 = UsersModel(username="user8")
+    user2 = UsersModel(username="user2")
+    user3 = UsersModel(username="user3")
 
+    # Add the users
     UsersModel.add_user(app, user1)
     UsersModel.add_user(app, user2)
     UsersModel.add_user(app, user3)
 
-    with app.app_context():
+    # Check if a user exists
+    username = "user1"
+    user = UsersModel.get_user_entry(app, username)
+    if user:
 
-        # Check if a user exists
-        username_to_update = "user1"
-        user = UsersModel.query.filter_by(username=username_to_update).first()
-        if user:
+        # Print user settings
+        print(f"Username: {user.username}")
+        print(f"SSH Key Setup: {user.ssh_key_setup}")
+        print(f"Logged In: {user.logged_in}")
 
-            # Print user settings
-            print(f"Username: {user.username}")
-            print(f"SSH Key Setup: {user.ssh_key_setup}")
-            print(f"Logged In: {user.logged_in}")
+        # Set ssh_key_setup to True for the user
+        UsersModel.set_ssh_key_setup(app, username, False)
 
-            # Set ssh_key_setup to True for the user
-            UsersModel.set_ssh_key_setup(app, username_to_update, True)
-            user.logged_in = True
+        # Set logged_in to True for the user
+        UsersModel.set_logged_in(app, username, False)
 
-            # Set logged_in to True for the user
-            UsersModel.set_logged_in(app, username_to_update, True)
+        # Print settings again
+        print(f"Username: {user.username}")
+        print(f"SSH Key Setup: {UsersModel.has_uploaded_ssh_key(app, username)}")
+        print(f"Logged In: {UsersModel.is_logged_in(app, username)}")
 
-            # Print settings again
-            print(f"Username: {user.username}")
-            print(f"SSH Key Setup: {user.ssh_key_setup}")
-            print(f"Logged In: {user.logged_in}")
-        else:
-            print(f"User {username_to_update} not found.")
+        # Set ssh_key_setup to True for the user
+        UsersModel.set_ssh_key_setup(app, username, True)
+
+        # Set logged_in to True for the user
+        UsersModel.set_logged_in(app, username, True)
+
+        # Print settings again
+        print(f"Username: {user.username}")
+        print(f"SSH Key Setup: {UsersModel.has_uploaded_ssh_key(app, username)}")
+        print(f"Logged In: {UsersModel.is_logged_in(app, username)}")
+    else:
+        print(f"User {username} not found.")
+
+    UsersModel.remove_user(app, username)
+    if not UsersModel.user_exists(app, username):
+        print(f"User entry: {username} was successfully removed.")
+
+    # Delete the test database file
+    cwd = os.path.abspath(os.path.dirname(__file__))
+    db_dir_path_1 = os.path.join(cwd, '..', 'instance')
+    db_dir_path_2 = os.path.join(cwd, 'instance')
+    if os.path.exists(db_dir_path_1):
+        shutil.rmtree(db_dir_path_1)
+        print(f"Deleted the test database dir: {db_dir_path}")
+
+    if os.path.exists(db_dir_path_2):
+        shutil.rmtree(db_dir_path_2)
+        print(f"Deleted the test database dir: {db_dir_path}")

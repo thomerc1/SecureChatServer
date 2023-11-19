@@ -161,3 +161,6 @@ cython_debug/
 
 # Secure Chat Server files
 *config.json*
+
+# Database files
+*.db
