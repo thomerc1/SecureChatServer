@@ -68,7 +68,7 @@ Python Flask Server with encrypted messaging
 | Test - multi users (up to 3)                             | Eric Thomas   | Complete                                | TBD  |
 | Test - on PC                                             | Eric Thomas   | Complete                                | TBD  |
 | Test failure to authenticate prevents access             | Eric Thomas   | Complete                                | TBD  |
-| Add version to homepage                                  | Eric Thomas   | In Progress                             | TBD  |
+| Add version to homepage                                  | Eric Thomas   | Complete                                | TBD  |
 
 
 ## TESTS

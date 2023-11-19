@@ -83,8 +83,6 @@ def home():
     # Init function vars
     error_message = ""
 
-    print(f"Logged in: {logged_in}")
-
     # React to user action button selection
     if request.method == 'POST':
         if 'add_ssh_key' in request.form:
@@ -220,7 +218,11 @@ def ssh_key_loader():
     Returns:
         render_template: The rendered SSH key uploader page template.
     """
-    return render_template('ssh_key_loader.html')
+
+    if verify_permissions():
+        return render_template('ssh_key_loader.html')
+    else:
+        return redirect(url_for('home'))
 
 
 @app.route('/chat')
@@ -234,7 +236,10 @@ def chat():
     Returns:
         render_template: The rendered chat page template.
     """
-    return render_template('chat.html')
+    if verify_permissions():
+        return render_template('chat.html')
+    else:
+        return redirect(url_for('home'))
 
 
 @app.route('/update_ssh', methods=['POST'])
@@ -303,7 +308,6 @@ def verify_permissions():
     if 'username' not in session:
         return False
     else:
-
         # If server config has ssh enabled
         if server_config.ssh_enabled:
             # Check if user has entered the encryption password
