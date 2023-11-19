@@ -15,10 +15,15 @@ VERSION_FILE="${REPO_ROOT}/config/version.txt"
 # Stash uncommitted changes, keeping the index (staged changes)
 git stash -q --keep-index
 
-# Now you can use $VERSION_FILE as the absolute path to versions.txt
-# Example: Writing the commit hash to versions.txt
+# Get the commit hash
 COMMIT_HASH=$(git rev-parse --short HEAD)
+
+# Restore the stashed changes
+git stash pop -q
+
 echo $COMMIT_HASH > "$VERSION_FILE"
 
 # Add versions.txt to the staging area
 git add "$VERSION_FILE"
+
+# The git commit will continue
