@@ -60,7 +60,7 @@ class ServerConfig:
         """
         try:
             with open(self.version_filename, "r") as version_file:
-                return version_file.read().strip()
+                return version_file.read().strip()[:7]
         except Exception:
             return "none"
 
