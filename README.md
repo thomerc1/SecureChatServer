@@ -22,24 +22,29 @@ Python Flask Server with encrypted messaging
 
 ## Structure
 .<br>
-├── app.py <br>
+├── app.py<br>
 ├── config<br>
-│   ├── server_config.py<br>
-│   └── server_state.json<br>
+│   ├── config.json<br>
+│   └── server_config.py<br>
 ├── database<br>
 │   └── models.py<br>
-├── instance<br>
 ├── README.md<br>
-├── resource<br>
-│   └── stored_hash.txt<br>
 ├── static<br>
-│   └── home.css<br>
+│   ├── home.css<br>
+│   └── js<br>
 ├── templates<br>
 │   ├── chat.html<br>
-│   └── home.html<br>
-├── test<br>
-└── utils<br>
-    └── encryption_tools.py<br>
+│   ├── home.html<br>
+│   ├── ssh_key_loader.html<br>
+│   └── user_action.html<br>
+├── utils<br>
+│   └── encryption_tools.py<br>
+└── venv<br>
+    ├── bin<br>
+    ├── include<br>
+    ├── lib<br>
+    ├── lib64 -> lib<br>
+    └── pyvenv.cfg<br>
 
 ## Notes
 - Encryption / Decryption Password: enter1the2chat3room4
