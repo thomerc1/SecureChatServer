@@ -12,6 +12,9 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 # Construct the absolute path to config/versions.txt
 VERSION_FILE="${REPO_ROOT}/config/version.txt"
 
+# Stash uncommitted changes, keeping the index (staged changes)
+git stash -q --keep-index
+
 # Now you can use $VERSION_FILE as the absolute path to versions.txt
 # Example: Writing the commit hash to versions.txt
 COMMIT_HASH=$(git rev-parse --short HEAD)
