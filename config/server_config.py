@@ -53,10 +53,10 @@ class ServerConfig:
 
     def _load_version(self) -> str:
         """
-        Read the version from and return the first 7 characters (expected to be a git hash)
+        Read the version from and return.
 
         Returns:
-            str: The version string (first 7 characters) if file exists, else "none"
+            str: The version string if file exists, else "none"
         """
         try:
             with open(self.version_filename, "r") as version_file:
@@ -66,7 +66,8 @@ class ServerConfig:
 
     def load_config(self) -> NoReturn:
         """
-        Load configuration from the 'config.json' file. If the file doesn't exist, it creates one with default values.
+        Load configuration from the 'config.json' file. If the file doesn't 
+        exist, it creates one with default values.
 
         Args:
             None

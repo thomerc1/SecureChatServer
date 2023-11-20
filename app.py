@@ -59,11 +59,10 @@ def home():
         Eric Thomas
 
     Description:
-        Serves as the landing page for the Secure Chat Server.
-
-        This function handles the GET and POST requests on the home page. It determines user
-        session status, authentication, and SSH key upload status. Based on user interactions,
-        it redirects to appropriate pages or displays error messages.
+        Serves as the landing page for the Secure Chat Server. Handles the GET and POST requests
+        on the home page. It determines user session status, authentication, and SSH key upload
+        status. Based on user interactions, it redirects to appropriate pages or displays
+        error messages.
 
     Returns:
         render_template: The rendered home page template with relevant user information and server settings.
@@ -124,12 +123,13 @@ def user_action():
 
     Global Variables:
         - active_user_count (int): Tracks the number of active users.
-          It is incremented when a user logs in and decremented when they log out.
+          Incremented on user login and decrements on logout.
     """
 
     global active_user_count
 
     if request.method == 'POST':
+
         # Get username and password from the form
         username = request.form['username']
         password = request.form['password']
@@ -211,9 +211,8 @@ def user_action():
 @app.route('/ssh_key_loader')
 def ssh_key_loader():
     """ 
-    Renders the SSH key uploading interface.
-
-    This endpoint enables users to upload their SSH keys as part of the server's security measures.
+    Renders the SSH key uploading interface. This endpoint enables users to
+    upload their SSH keys.
 
     Returns:
         render_template: The rendered SSH key uploader page template.
@@ -228,10 +227,8 @@ def ssh_key_loader():
 @app.route('/chat')
 def chat():
     """ 
-    Renders the chat interface for the Secure Chat Server.
-
-    This endpoint provides the main chat functionality of the application, allowing users to
-    interact in a secure environment.
+    Renders the chat interface for the Secure Chat Server. This endpoint
+    provides the main chat functionality of the application.
 
     Returns:
         render_template: The rendered chat page template.
@@ -249,9 +246,8 @@ def update_ssh():
         Eric Thomas
 
     Description:
-        Handles the updates to the server's SSH configuration.
-
-        This function processes POST requests to toggle the SSH setting on or off. It updates
+        Handles the updates to the server's SSH configuration. This function
+        processes POST requests to toggle the SSH setting on or off. It updates
         the server configuration accordingly.
 
     Returns:
@@ -273,10 +269,9 @@ def update_encryption():
         Eric Thomas
 
     Description:
-        Manages updates to the server's encryption settings.
-
-        This function processes POST requests to enable or disable encryption. It updates the
-        server configuration based on the received data.
+        Manages updates to the server's encryption settings. This function processes 
+        POST requests to enable or disable encryption. It updates the server
+        configuration based on the received data.
 
     Returns:
         jsonify: A JSON response indicating the success or failure of the update operation.
@@ -296,12 +291,11 @@ def verify_permissions():
 
     Description:
         Verifies user permissions by assessing session status and server configurations.
-
         It checks if the user is in the session, and then, based on the server's SSH and
         encryption settings, verifies if the user has uploaded an SSH key and authenticated.
 
     Returns:
-        bool: True if all required permissions are satisfied, False otherwise.
+        bool: True if required permissions are satisfied, False otherwise.
     """
 
     # Check if the user session has been established

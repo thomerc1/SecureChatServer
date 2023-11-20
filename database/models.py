@@ -16,7 +16,6 @@ Dependencies:
 - Flask-SQLAlchemy
 """
 
-# Append the source dirs to the Python Path
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Integer, String, Boolean
@@ -53,10 +52,6 @@ class UsersModel(db.Model):
 
     Description:
         SQLAlchemy Model for storing user information.
-
-    Notes: 
-        Models in python are very confusing. Each model defines the "columns" in your database.
-        However, each instance of the model is a row in your database. 
     """
 
     __tablename__ = "users"
@@ -115,7 +110,7 @@ class UsersModel(db.Model):
                     db.session.commit()
         except Exception as e:
             db.session.rollback()
-            # TODO: Handle the exception here (e.g., log the error)
+            # TODO: Handle exception
             traceback.print_exc()
 
     @staticmethod
@@ -227,7 +222,7 @@ class UsersModel(db.Model):
                     db.session.commit()
         except Exception as e:
             db.session.rollback()
-            # TODO: Handle the exception here (e.g., log the error)
+            # TODO: Handle exception
             traceback.print_exc()
 
     @staticmethod
@@ -255,7 +250,7 @@ class UsersModel(db.Model):
                     db.session.commit()
         except Exception as e:
             db.session.rollback()
-            # TODO: Handle the exception here (e.g., log the error)
+            # TODO: Handle exception
             traceback.print_exc()
 
     @staticmethod
@@ -296,7 +291,6 @@ class ChatModel(db.Model):
 
     """
     __tablename__ = "chat"
-    __bind_key__ = "chat_db"
     """
 
     id = db.Column(db.Integer, primary_key=True)
@@ -347,10 +341,10 @@ if __name__ == '__main__':
         print(f"SSH Key Setup: {user.ssh_key_setup}")
         print(f"Logged In: {user.logged_in}")
 
-        # Set ssh_key_setup to True for the user
+        # Set ssh_key_setup to False for the user
         UsersModel.set_ssh_key_setup(app, username, False)
 
-        # Set logged_in to True for the user
+        # Set logged_in to False for the user
         UsersModel.set_logged_in(app, username, False)
 
         # Print settings again
