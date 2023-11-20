@@ -1,19 +1,112 @@
+<!--
+    ==========================================
+    Course Name: CMSC495 7384
+    Author: Eric Thomas
+    Group: A
+    Date: Nov 23'
+    Project: CMSC495 Secure Chat Server
+    Platform: Debian Linux
+    ==========================================
+    Description:
+    This HTML template defines the structure and content of the home page
+    for a Secure Messaging Server. It includes toggle switches for enabling
+    SSH authentication and SHA-256 encryption, as well as buttons for
+    various actions.
+    ==========================================
+-->
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-    </style>
+
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
 </head>
+
 <body>
-    <h1>Secure Messaging Server</h1>
-    <p>Multi-user encrypted messaging server</p>
+    <!-- Javascript for toggle switch updates -->
+    <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+
+    <!-- Main content of the page -->
+    <h1>Secure Chat Server</h1>
+    <h3>Multi-user encrypted server home page</h3>
+    <p><i><b>Version:</b></i> {{ version }}</p>
+
+
+    <!-- Jinja2 Conditionals -->
+    <!-- Display username if logged in -->
+    {% if session.username %}
+    <p><i><b>Username:</b></i> {{ session.username }}</p>
+    {% else %}
+    <p><i><b>Username:</b></i> No user session established. Select: "User Actions / Login"</p>
+    {% endif %}
+
+    {% if logged_in %}
+    <p><i><b>Login Status:</b></i> Logged in</p>
+    {% else %}
+    <p><i><b>Login Status:</b></i> Not logged in</p>
+    {% endif %}
+
+    {% if ssh_key_uploaded %}
+    <p><i><b>SSH Key:</b></i> SSH Key Uploaded</p>
+    {% else %}
+    <p><i><b>SSH Key:</b></i> SSH Key Not Uploaded</p>
+    {% endif %}
+    <p><i><b>Active Users:</b></i> {{ active_user_count }} of {{ max_user_count }}</p>
+
+
+    <!-- Separator -->
+    <hr>
+
+
+    {% if session.username %}
+    <!-- Toggle switches for SSH authentication and SHA-256 encryption -->
+    <label class="toggle-label">Enable SSH Authentication:</label>
+    <label class="toggle-switch">
+        <input type="checkbox" class="toggle-input" id="ssh-switch" {% if server_config.ssh_enabled %}checked{% endif %}
+            onchange="updateSSH()">
+        <span class="toggle-slider"></span>
+    </label>
+
+    <label class="toggle-label">Enable SHA-256 Encryption:</label>
+    <label class="toggle-switch">
+        <input type="checkbox" class="toggle-input" id="encryption-switch" {% if server_config.encryption_enabled
+            %}checked{% endif %} onchange="updateEncryption()">
+        <span class="toggle-slider"></span>
+    </label>
+
+
+    <br>
+
+    <p>Select an action:</p>
+
+    <form method="POST">
+        <button type="submit" name="add_ssh_key">Add SSH Key</button>
+        <button type="submit" name="user_auth">User Actions / Logout</button>
+        <button type="submit" name="enter_chat">Enter Chat</button>
+    </form>
+    {% else %}
+    <p>Please start a session by selecting the button.</p>
+    <form method="POST">
+        <button type="submit" name="user_auth">User Actions / Login</button>
+    </form>
+    {% endif %}
+
+
+
+
+
+    <!-- Display error message if it exists -->
+    {% if error_message %}
+    <div class="error-message">
+        {{ error_message|safe }}
+    </div>
+    {% endif %}
+
 </body>
+
 </html>
