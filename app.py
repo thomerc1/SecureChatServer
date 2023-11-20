@@ -156,9 +156,10 @@ def user_action():
 
             # If user exist
             if user:
-                session['username'] = username
-                UsersModel.set_logged_in(app, username, True)
-                active_user_count += 1
+                if 'username' not in session:
+                    session['username'] = username
+                    UsersModel.set_logged_in(app, username, True)
+                    active_user_count += 1
                 return redirect(url_for('home'))
             else:
                 flash(f'Username: {username} does not exist. Please add user.')
