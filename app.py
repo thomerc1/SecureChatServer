@@ -98,7 +98,7 @@ def home():
                     error_message += f"Create a username or login if you have one.<br>"
                 if server_config.ssh_enabled and not ssh_key_uploaded:
                     error_message += "SSH is enabled, but you haven't enabled SSH for your account.<br>"
-                if server_config.encryption_enabled and not authentication:
+                if server_config.encryption_enabled and not logged_in:
                     error_message += "Encryption is enabled, but you haven't authenticated.<br>"
 
     return render_template('home.html', logged_in=logged_in, ssh_key_uploaded=ssh_key_uploaded, server_config=server_config, error_message=error_message,
