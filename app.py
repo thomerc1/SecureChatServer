@@ -218,11 +218,8 @@ def ssh_key_loader():
     Returns:
         render_template: The rendered SSH key uploader page template.
     """
-
-    if verify_permissions():
-        return render_template('ssh_key_loader.html')
-    else:
-        return redirect(url_for('home'))
+    
+    return render_template('ssh_key_loader.html')
 
 
 @app.route('/chat')
