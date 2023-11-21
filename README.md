@@ -2,10 +2,20 @@
 Python Flask Server with encrypted messaging
 
 ## Usage
+
+### Dependencies
+#### To create dependencies.txt
+- dependencies.txt created using: `pip freeze > dependencies.txt` within python virtual environment.
+#### To use dependencies.txt 
+- pipenv --python [python version]
+- pipenv install -r dependencies.txt
+
 ### Run
-- python3 - m venv venv
-- Linux: source venv/bin/activate
-- Windows: venv\Scripts\activate
+
+- (optional for python venv) python3 - m venv venv
+- (optional for python venv) Linux: source venv/bin/activate
+- (optional for python venv) Windows: venv\Scripts\activate
+- Issue: `python3 app.py` from within the SecureChatServer directory
 
 ### Interface
 - From webbrowser, navigate to url: localhost:5000
@@ -47,7 +57,7 @@ Python Flask Server with encrypted messaging
     └── pyvenv.cfg<br>
 
 ## Notes
-- Encryption / Decryption Password: enter1the2chat3room4
+- Encryption / Decryption / All User Login Password: enter1the2chat3room4
   
 ## TODO
 
