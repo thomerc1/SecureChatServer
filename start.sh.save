@@ -1,0 +1,9 @@
+#!/bin/bash
+(
+        #source ./venv/bin/activate
+        echo "Starting Server"
+        nohup python app.py
+        echo "Started Secure Chat Server Successfully"
+        echo "Testing: "
+        wget "https://crypt.labarge.dev" > /dev/stdout
+)

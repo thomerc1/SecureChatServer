@@ -319,5 +319,5 @@ def verify_permissions():
 if __name__ == '__main__':
     # Log all users out on startup
     UsersModel.set_all_users_logged_out(app)
-    app.run(debug=True)
-    # app.run(host="192.168.1.122", port=8080, debug=True)
+    #app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
