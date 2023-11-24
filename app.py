@@ -22,6 +22,8 @@ from database.models import db, UsersModel
 from utils.encryption_tools import get_password_hash
 from config.server_config import ServerConfig
 from flask_sqlalchemy import SQLAlchemy
+from socket import inet_aton
+import argparse
 import os
 
 # Get current working directory
@@ -218,7 +220,7 @@ def ssh_key_loader():
     Returns:
         render_template: The rendered SSH key uploader page template.
     """
-    
+
     return render_template('ssh_key_loader.html')
 
 
@@ -319,5 +321,24 @@ def verify_permissions():
 if __name__ == '__main__':
     # Log all users out on startup
     UsersModel.set_all_users_logged_out(app)
-    app.run(debug=True)
-    # app.run(host="192.168.1.122", port=8080, debug=True)
+
+    # Setup argument parser
+    parser = argparse.ArgumentParser(description="Run the web application.")
+    parser.add_argument('--ip', type=str, help='The IP address to bind to.', default='127.0.0.1')
+    parser.add_argument('--port', type=int, help='The port to listen on.', default=5000)
+    args = parser.parse_args()
+
+    # Validate IP address
+    try:
+        inet_aton(args.ip)
+    except OSError:
+        print("Error: Invalid IP address format.")
+        sys.exit(1)
+
+    # Validate port number
+    if not (0 <= args.port <= 65535):
+        print("Error: Port number must be between 0 and 65535.")
+        sys.exit(1)
+
+    # Run the application
+    app.run(host=args.ip, port=args.port, debug=True)
