@@ -17,13 +17,14 @@ Usage:
 - python3 app.py <-- to run the application
 - apt install python3.10-venv
 """
-from flask import Flask, render_template, session, redirect, url_for, request, jsonify, flash
-from database.models import db, UsersModel
+from flask import Flask, render_template, session, redirect, url_for, request, jsonify, flash, abort
+from database.models import db, UsersModel, ChatModel
 from utils.encryption_tools import get_password_hash
 from config.server_config import ServerConfig
 from flask_sqlalchemy import SQLAlchemy
 from socket import inet_aton
 import argparse
+import traceback
 import os
 
 # Get current working directory
@@ -146,7 +147,7 @@ def user_action():
         # If validated
         if not password_match:  # username limits controlled by html
             flash('Invalid password', 'error')
-            return render_template('user_action.html')
+            return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
         # If logging in
         if action == 'login':
@@ -154,7 +155,7 @@ def user_action():
             # If chat not full
             if MAX_USER_COUNT <= active_user_count:
                 flash('Chat room is full. Please try again later', 'error')
-                return render_template('user_action.html')
+                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
             # If user exist
             if user:
@@ -165,18 +166,18 @@ def user_action():
                 return redirect(url_for('home'))
             else:
                 flash(f'Username: {username} does not exist. Please add user.')
-                return render_template('user_action.html')
+                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
         # If adding user
         if action == 'add_user':
             if user:
                 flash('User exists', 'error')
-                return render_template('user_action.html')
+                return render_template('user_action.html', max_username_length=server_config.max_username_length())
             else:
                 new_user = UsersModel(username=username)
                 UsersModel.add_user(app, new_user)
                 flash(f'User account created for: {username}. You may now login!')
-                return render_template('user_action.html')
+                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
         # User logout
         if action == 'logout':
@@ -185,10 +186,10 @@ def user_action():
                 UsersModel.set_logged_in(app, username, False)
                 active_user_count -= 1
                 flash(f'User {username} has been logged out.', 'success')
-                return render_template('user_action.html')
+                return render_template('user_action.html', max_username_length=server_config.max_username_length())
             else:
                 flash(f'Username {username} does not have an active session.')
-                return render_template('user_action.html')
+                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
         # Delete user
         if action == 'delete_user':
@@ -203,12 +204,12 @@ def user_action():
                     active_user_count -= 1
 
                 flash(f'User account {username} has been deleted.', 'success')
-                return render_template('user_action.html')
+                return render_template('user_action.html', max_username_length=server_config.max_username_length())
             else:
                 flash(f'Username {username} does not have an account.')
-                return render_template('user_action.html')
+                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
-    return render_template('user_action.html')
+    return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
 
 @app.route('/ssh_key_loader')
@@ -226,15 +227,27 @@ def ssh_key_loader():
 
 @app.route('/chat')
 def chat():
-    """ 
-    Renders the chat interface for the Secure Chat Server. This endpoint
-    provides the main chat functionality of the application.
+    """
+    Author:
+        Eric Thomas
+
+    Description:
+        Renders the chat interface for the Secure Chat Server. This endpoint
+        provides the main chat functionality of the application.
 
     Returns:
-        render_template: The rendered chat page template.
+        render_template: The rendered chat page template with the user's username
+                         and maximum message length, if the user has permissions.
+        redirect: A redirection to the home page if the user does not have permissions.
     """
+
+    # Get the username
+    username = ''
+    if 'username' in session:
+        username = session['username']
+
     if verify_permissions():
-        return render_template('chat.html')
+        return render_template('chat.html', username=username, max_message_length=server_config.max_message_length())
     else:
         return redirect(url_for('home'))
 
@@ -282,6 +295,59 @@ def update_encryption():
         server_config.save_config()
         return jsonify(success=True)
     return jsonify(success=False), 400
+
+
+@app.route('/submit_message', methods=['POST'])
+def submit_message():
+    """
+    Author:
+        Eric Thomas
+
+    Description:
+        Handles the submission of new chat messages sent from the client.
+
+    Returns:
+        jsonify: A JSON object indicating the success status of the message submission.
+    """
+    user_id = request.json.get('user_id')
+    message_content = request.json.get('message_content')
+
+    response_json = {"success": True}
+
+    # Use the static method to add the new message
+    if (user_id is not None) and (message_content is not None):
+        try:
+            ChatModel.add_new_message(app, user_id, message_content)
+        except:
+            err_msg = traceback.format_exc()
+            # Abort with internal server error
+            abort(500, err_msg)
+    else:
+        err_msg = (
+            f'ERROR {__file__}:\n\tUnable to add message to the database:\n\tUser_id: {user_id}\n\tMessage: {message_content}')
+        # Abort with 'bad request' error
+        abort(400, err_msg)
+
+    return jsonify({"success": True})
+
+
+@app.route('/get_messages', methods=['GET'])
+def get_messages():
+    """
+    Author:
+        Eric Thomas
+
+    Description:
+        Fetches and returns all chat messages from the database chat table.
+
+    Returns:
+        jsonify: A JSON list of dictionaries, each representing a chat message.
+    """
+
+    messages = ChatModel.query.order_by(ChatModel.timestamp.asc()).all()
+    messages_list = [{'user_id': message.user_id, 'message': message.message,
+                      'timestamp': message.timestamp.strftime("%Y-%m-%d %H:%M:%S")} for message in messages]
+    return jsonify(messages_list)
 
 
 def verify_permissions():
