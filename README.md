@@ -1,7 +1,9 @@
 # SecureChatServer
 Python Flask Server with encrypted messaging
 
-## Start
+## Local Usage
+For usage on your local machine / network
+
 ### Install dependencies.txt 
 - pip install -r dependencies.txt
 
@@ -20,13 +22,15 @@ Python Flask Server with encrypted messaging
 - (Optional) `python3 app.py --ip [ip address] --port [port]`
 
 ## Gitlab Usage
+For usage when installing and running within gitlab environment
+
 ### Install
-- Run config/gitlab-server-setup.sh
+- Run: config/gitlab-server-setup.sh
 
 ### Run
-- Run gitlab-server-start.sh
+- Run: gitlab-server-start.sh
 
-## Usage
+## Interface
 ### Gitlab
 - host: gitlab.labarge.dev (24.144.104.215)
 - username: dev
@@ -38,7 +42,7 @@ Python Flask Server with encrypted messaging
   - NOTE: If you use incognito mode for browser, you can run multiple sessions (browser
     won't share data amongst windows); therefore, you can login with multiple users
 
-## Common
+### Common
 - Select 'User Actions / Login' button
 - Add a username
 - Enter the password: enter1the2chat3room4
@@ -54,28 +58,26 @@ Python Flask Server with encrypted messaging
 .<br>
 ├── app.py<br>
 ├── config<br>
-│   ├── config.json<br>
-│   └── server_config.py<br>
+│   ├── gitlab-server-setup.sh<br>
+│   ├── server_config.py<br>
+│   └── version.txt<br>
 ├── database<br>
 │   └── models.py<br>
+├── dependencies.txt<br>
+├── gitlab-server-start.sh<br>
 ├── README.md<br>
 ├── static<br>
 │   ├── home.css<br>
 │   └── js<br>
+│       └── home.js<br>
 ├── templates<br>
 │   ├── chat.html<br>
 │   ├── home.html<br>
 │   ├── ssh_key_loader.html<br>
 │   └── user_action.html<br>
-├── utils<br>
-│   └── encryption_tools.py<br>
-└── venv<br>
-    ├── bin<br>
-    ├── include<br>
-    ├── lib<br>
-    ├── lib64 -> lib<br>
-    └── pyvenv.cfg<br>
-  
+└── utils<br>
+    └── encryption_tools.py<br>
+
 ## TODO
 - SSH authentication page
 - Chat page
