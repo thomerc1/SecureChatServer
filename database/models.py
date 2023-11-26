@@ -11,6 +11,10 @@ Secure Chat Server Database Models
 
 This module defines the SQLAlchemy models (tables) for the Secure Chat Server application.
 It includes the UsersModel and ChatModel classes for storing user and chat information.
+
+TODO:
+- Getters for ChatModel
+- Make all attributes for ChatModel and UsersModel private
 """
 
 from flask import Flask
@@ -267,6 +271,7 @@ class ChatModel(db.Model):
                         nullable=False)
     message = db.Column(db.String(ServerConfig.max_message_length()), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    encrypted = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         """
@@ -279,6 +284,7 @@ class ChatModel(db.Model):
         MSG_SNIPPET_LENGTH = 25
         msg_snippet = (self.message[:MSG_SNIPPET_LENGTH] +
                        '...') if len(self.message) > MSG_SNIPPET_LENGTH else self.message
+        msg_snippet = "encrypted" if self.encrypted else msg_snippet
         return f'<Chat {self.id} - User {self.user_id} - {self.timestamp}: "{msg_snippet}">'
 
     @staticmethod
@@ -298,7 +304,7 @@ class ChatModel(db.Model):
                 db.session.commit()
 
     @staticmethod
-    def add_new_message(app: Flask, user_id: str, message_content: str):
+    def add_new_message(app: Flask, user_id: str, message_content: str, encrypted_flag: bool):
         """
         Description:
             Adds a new message to the database and ensures that the total number of
@@ -308,10 +314,11 @@ class ChatModel(db.Model):
             app (Flask): The Flask application instance.
             user_id (str): The ID of the user sending the message.
             message_content (str): The content of the message being sent.
+            encrypted_flag (bool): Indicates whether the message is encrypted.
         """
         with app.app_context():
             ChatModel.check_and_remove_oldest_message(app)
-            new_message = ChatModel(user_id=user_id, message=message_content)
+            new_message = ChatModel(user_id=user_id, message=message_content, encrypted=encrypted_flag)
             db.session.add(new_message)
             db.session.commit()
 
@@ -392,7 +399,7 @@ if __name__ == '__main__':
     message_content = "Hello, chat!"
 
     # Add a new chat message to the chat database
-    ChatModel.add_new_message(app, user_id, message_content)
+    ChatModel.add_new_message(app, user_id, message_content, True)
 
     # Retrieve and print the chat messages from the chat database
     with app.app_context():
@@ -402,12 +409,13 @@ if __name__ == '__main__':
             print(f"User ID: {message.user_id}")
             print(f"Message: {message.message}")
             print(f"Timestamp: {message.timestamp}")
+            print(f"Is Encrypted: {message.encrypted}")
             print()
 
     # Show message count control
     exceed_value = 20
     for i in range(ServerConfig.max_message_count() + exceed_value):
-        ChatModel.add_new_message(app, user_id, message_content)
+        ChatModel.add_new_message(app, user_id, message_content, False)
 
     with app.app_context():
         messages = ChatModel.query.all()
