@@ -26,8 +26,6 @@
     <!-- Link to the external CSS file -->
     <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
 
-    <!-- Javascript for toggle switch updates -->
-    <script src="{{ url_for('static', filename='js/home.js') }}"></script>
 </head>
 
 <body>
@@ -91,16 +89,16 @@
         <button type="submit" name="user_auth">User Actions / Logout</button>
         <button type="submit" name="enter_chat">Enter Chat</button>
     </form>
+
+    <!-- Javascript for toggle switch updates -->
+    <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+
     {% else %}
     <p>Please start a session by selecting the button.</p>
     <form method="POST">
         <button type="submit" name="user_auth">User Actions / Login</button>
     </form>
     {% endif %}
-
-
-
-
 
     <!-- Display error message if it exists -->
     {% if error_message %}

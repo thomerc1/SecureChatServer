@@ -16,23 +16,20 @@
 // Retrieve the encryption key from sessionStorage
 var encryptionKey = sessionStorage.getItem("encryptionKey");
 
-// Check if encryptionKey exists
+// Check if encryptionKey exists and log it to the console
 if (encryptionKey) {
-    // Create a new paragraph element
-    var para = document.createElement("p");
-    para.textContent = "Encryption Key: " + encryptionKey;
-
-    // Append the paragraph to the div with id 'encryptionKeyDisplay'
-    document.getElementById("encryptionKeyDisplay").appendChild(para);
+    console.log("Encryption Key:", encryptionKey);
 } else {
-
-    // If encryptionKey doesn't exist, display a message
-    var msg = "No encryption key found. This is a result of navigating to a new window. " +
-        "You must login again at the user actions page.";
-    document.getElementById("encryptionKeyDisplay").textContent = msg;
+    console.log("No encryption key found.");
 }
 
 var username = document.body ? document.body.getAttribute("data-username") : null;
+// Sets var to false unles it matches the string
+var encryptionEnabled = document.body.getAttribute("data-encryption-enabled") === 'True'; 
+
+// Log username and encryptionEnabled to the console
+console.log("Username:", username);
+console.log("Encryption Enabled:", encryptionEnabled);
 
 // Check if username exists
 if (username) {
@@ -49,9 +46,24 @@ if (username) {
     document.getElementById("usernameDisplay").textContent = msg;
 }
 
+// Function from https://github.com/brix/crypto-js
+function encryptMessage(message) {
+    return CryptoJS.AES.encrypt(message, encryptionKey).toString();
+}
+
+// Function from https://github.com/brix/crypto-js
+function decryptMessage(encryptedMessage) {
+    const bytes = CryptoJS.AES.decrypt(encryptedMessage, encryptionKey);
+    return bytes.toString(CryptoJS.enc.Utf8);
+}
 
 function sendMessage() {
     var messageContent = document.getElementById("messageInput").value;
+
+    // Encrypt if encryption enabled and a key is provided
+    if (encryptionEnabled && encryptionKey){
+        messageContent = encryptMessage(messageContent)
+    }
 
     // Send the message content to the server
     fetch('/submit_message', {
@@ -59,7 +71,7 @@ function sendMessage() {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ user_id: username, message_content: messageContent })
+        body: JSON.stringify({ user_id: username, message_content: messageContent, message_encrypted: encryptionEnabled })
     })
         // Get the response from flask if available
         .then(response => response.json())
@@ -87,6 +99,22 @@ function refreshChat() {
             messageContainer.innerHTML = '';
 
             messages.forEach((msg, index) => {
+                var messageText = msg.message;
+                var messageEnc = msg.encrypted === true
+
+                // If the database message attribute states it has an encrypted message and the decryption key is available
+                if (messageEnc) {
+                    try {
+                        messageText = decryptMessage(messageText);
+                    } catch (error) {
+                        console.error('Error decrypting message:', error);
+                        messageText = "Error decrypting message";
+                    }
+                }
+                else{
+                    console.log('Decrypting:', 'False');
+                }
+
                 // Create a message element with a class based on the user
                 var messageElement = document.createElement("div");
                 messageElement.classList.add("message", `user${index % 3 + 1}`);
@@ -98,7 +126,7 @@ function refreshChat() {
 
                 // Create message content element
                 var messageContentElement = document.createElement("div");
-                messageContentElement.textContent = msg.message;
+                messageContentElement.textContent = messageText;
 
                 // Append user info and message content to message element
                 messageElement.appendChild(userInfoElement);
@@ -118,6 +146,4 @@ refreshChat();
 
 // Refresh chat messages every 3 seconds
 setInterval(refreshChat, 3000);
-
-
 

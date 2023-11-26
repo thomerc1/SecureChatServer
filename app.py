@@ -131,6 +131,9 @@ def user_action():
 
     global active_user_count
 
+    # Get necessary server configuration values
+    max_username_length = server_config.max_username_length()
+
     if request.method == 'POST':
 
         # Get username and password from the form
@@ -147,52 +150,48 @@ def user_action():
         # If validated
         if not password_match:  # username limits controlled by html
             flash('Invalid password', 'error')
-            return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
         # If logging in
-        if action == 'login':
+        elif action == 'login':
 
             # If chat not full
             if MAX_USER_COUNT <= active_user_count:
                 flash('Chat room is full. Please try again later', 'error')
-                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
             # If user exist
-            if user:
+            elif user:
                 if 'username' not in session:
                     session['username'] = username
                     UsersModel.set_logged_in(app, username, True)
                     active_user_count += 1
                 return redirect(url_for('home'))
+
             else:
                 flash(f'Username: {username} does not exist. Please add user.')
-                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
         # If adding user
-        if action == 'add_user':
+        elif action == 'add_user':
             if user:
                 flash('User exists', 'error')
-                return render_template('user_action.html', max_username_length=server_config.max_username_length())
+
             else:
                 new_user = UsersModel(username=username)
                 UsersModel.add_user(app, new_user)
                 flash(f'User account created for: {username}. You may now login!')
-                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
         # User logout
-        if action == 'logout':
+        elif action == 'logout':
             if 'username' in session:
                 session.pop('username', None)
                 UsersModel.set_logged_in(app, username, False)
                 active_user_count -= 1
                 flash(f'User {username} has been logged out.', 'success')
-                return render_template('user_action.html', max_username_length=server_config.max_username_length())
+
             else:
                 flash(f'Username {username} does not have an active session.')
-                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
         # Delete user
-        if action == 'delete_user':
+        elif action == 'delete_user':
             if UsersModel.user_exists(app, username):
 
                 # Remove database entry for user
@@ -204,12 +203,11 @@ def user_action():
                     active_user_count -= 1
 
                 flash(f'User account {username} has been deleted.', 'success')
-                return render_template('user_action.html', max_username_length=server_config.max_username_length())
+
             else:
                 flash(f'Username {username} does not have an account.')
-                return render_template('user_action.html', max_username_length=server_config.max_username_length())
 
-    return render_template('user_action.html', max_username_length=server_config.max_username_length())
+    return render_template('user_action.html', max_username_length=max_username_length)
 
 
 @app.route('/ssh_key_loader')
@@ -247,7 +245,8 @@ def chat():
         username = session['username']
 
     if verify_permissions():
-        return render_template('chat.html', username=username, max_message_length=server_config.max_message_length())
+        return render_template('chat.html', username=username, max_message_length=server_config.max_message_length(),
+                               encryption_enabled=server_config.encryption_enabled)
     else:
         return redirect(url_for('home'))
 
@@ -309,26 +308,26 @@ def submit_message():
     Returns:
         jsonify: A JSON object indicating the success status of the message submission.
     """
-    user_id = request.json.get('user_id')
-    message_content = request.json.get('message_content')
+    if not request.is_json:
+        # If the request does not contain JSON, return an error
+        return jsonify({"success": False, "error": "Invalid JSON format"}), 400
 
-    response_json = {"success": True}
+    data = request.get_json()
+    user_id = data.get('user_id')
+    message_content = data.get('message_content')
+    message_encrypted = data.get('message_encrypted') == True  # will be false unless the string is 'True'
 
-    # Use the static method to add the new message
-    if (user_id is not None) and (message_content is not None):
-        try:
-            ChatModel.add_new_message(app, user_id, message_content)
-        except:
-            err_msg = traceback.format_exc()
-            # Abort with internal server error
-            abort(500, err_msg)
-    else:
-        err_msg = (
-            f'ERROR {__file__}:\n\tUnable to add message to the database:\n\tUser_id: {user_id}\n\tMessage: {message_content}')
-        # Abort with 'bad request' error
-        abort(400, err_msg)
+    if not user_id or not message_content:
+        # If user_id or message_content is missing, return an error
+        return jsonify({"success": False, "error": "Missing user_id or message_content"}), 400
 
-    return jsonify({"success": True})
+    try:
+        ChatModel.add_new_message(app, user_id, message_content, message_encrypted)
+        return jsonify({"success": True})
+    except Exception as e:
+        # Log the exception and return an error message
+        print(f"Error adding message: {e}")
+        return jsonify({"success": False, "error": "Internal Server Error"}), 500
 
 
 @app.route('/get_messages', methods=['GET'])
@@ -346,7 +345,8 @@ def get_messages():
 
     messages = ChatModel.query.order_by(ChatModel.timestamp.asc()).all()
     messages_list = [{'user_id': message.user_id, 'message': message.message,
-                      'timestamp': message.timestamp.strftime("%Y-%m-%d %H:%M:%S")} for message in messages]
+                      'timestamp': message.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                      'encrypted': message.encrypted} for message in messages]
     return jsonify(messages_list)
 
 

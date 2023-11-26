@@ -24,9 +24,12 @@
     <title>Chat Page</title>
     <!-- Link to the external CSS file -->
     <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+
+    <!-- Link to external crypto-js-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
 </head>
 
-<body data-username="{{ username }}">
+<body data-username="{{ username }}" data-encryption-enabled="{{ encryption_enabled }}">
 
     <!-- Header Container -->
     <div id="header">

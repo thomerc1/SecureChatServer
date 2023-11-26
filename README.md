@@ -81,6 +81,10 @@ For usage when installing and running within gitlab environment
 ## TODO
 - SSH authentication page
 - Chat page
+  - Clean up the datatype conversions on booleans between javascript and python
+  - Adjust the messageContainer to not be cut off 
+  - Increase error handling in javascript for the chat page
+  - Error checking if not able to access crypto-js library
 
 ## TESTS
 - TBD
