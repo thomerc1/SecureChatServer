@@ -1,22 +1,59 @@
+<!--
+    ==========================================
+    Course Name: CMSC495 7384
+    Author: Eric Thomas
+    Group: A
+    Date: Nov 23'
+    Project: CMSC495 Secure Chat Server
+    Platform: Debian Linux
+    ==========================================
+    Description:
+    This HTML template defines the structure and content of the chat page
+    for a Secure Messaging Server. It includes an input box with a send
+    button for new messages as well as a message display for all messages
+    stored in the database.
+    ==========================================
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-    </style>
+    <title>Chat Page</title>
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+
+    <!-- Link to external crypto-js-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
 </head>
 
-<body>
-    <h1>Secure Chat Server</h1>
-    <p>Multi-user encrypted messaging server chat page - IN PROGRESS</p>
+<body data-username="{{ username }}" data-encryption-enabled="{{ encryption_enabled }}">
+
+    <!-- Header Container -->
+    <div id="header">
+        <h1>Secure Chat Server</h1>
+        <p>Multi-user encrypted messaging server chat page</p>
+
+        <div id="encryptionKeyDisplay"></div>
+        <div id="usernameDisplay"></div>
+
+        <!-- Separator -->
+        <hr>
+    </div>
+
+    <!-- Message Container - where messages will be displayed -->
+    <div id="messageContainer"></div>
+
+    <!-- Input Box Container -->
+    <div id="inputBox">
+        <input type="text" id="messageInput" placeholder="Enter a message..." maxlength="{{ max_message_length }}">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <!-- Javascript for chat message handling -->
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </body>
 
 </html>

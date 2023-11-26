@@ -58,29 +58,35 @@ For usage when installing and running within gitlab environment
 .<br>
 ├── app.py<br>
 ├── config<br>
-│   ├── gitlab-server-setup.sh<br>
-│   ├── server_config.py<br>
-│   └── version.txt<br>
+│   ├── gitlab-server-setup.sh<br>
+│   ├── server_config.py<br>
+│   └── version.txt<br>
 ├── database<br>
-│   └── models.py<br>
+│   └── models.py<br>
 ├── dependencies.txt<br>
 ├── gitlab-server-start.sh<br>
 ├── README.md<br>
 ├── static<br>
-│   ├── home.css<br>
-│   └── js<br>
-│       └── home.js<br>
+│   ├── chat.css<br>
+│   ├── home.css<br>
+│   └── js<br>
+│       ├── chat.js<br>
+│       └── home.js<br>
 ├── templates<br>
-│   ├── chat.html<br>
-│   ├── home.html<br>
-│   ├── ssh_key_loader.html<br>
-│   └── user_action.html<br>
+│   ├── chat.html<br>
+│   ├── home.html<br>
+│   ├── ssh_key_loader.html<br>
+│   └── user_action.html<br>
 └── utils<br>
     └── encryption_tools.py<br>
 
 ## TODO
 - SSH authentication page
 - Chat page
+  - Clean up the datatype conversions on booleans between javascript and python
+  - Adjust the messageContainer to not be cut off 
+  - Increase error handling in javascript for the chat page
+  - Error checking if not able to access crypto-js library
 
 ## TESTS
 - TBD
