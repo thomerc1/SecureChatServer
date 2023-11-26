@@ -264,8 +264,8 @@ if __name__ == '__main__':
     # Print the default config
     print(f"SSH Enabled: {server_config.ssh_enabled}")
     print(f"Encryption Enabled: {server_config.encryption_enabled}")
-    print(f"Max Username Length: {server_config.max_username_length}")
-    print(f"Max Message Length: {server_config.max_message_length}")
+    print(f"Max Username Length: {server_config.max_username_length()}")
+    print(f"Max Message Length: {server_config.max_message_length()}")
     print(f"Password hash: {server_config.password_hash}")
     print(f"Version: {server_config.version}")
 
@@ -283,8 +283,8 @@ if __name__ == '__main__':
     # Print the config
     print(f"SSH Enabled: {server_config.ssh_enabled}")
     print(f"Encryption Enabled: {server_config.encryption_enabled}")
-    print(f"Max Username Length: {server_config.max_username_length}")
-    print(f"Max Message Length: {server_config.max_message_length}")
+    print(f"Max Username Length: {server_config.max_username_length()}")
+    print(f"Max Message Length: {server_config.max_message_length()}")
     print(f"Password hash: {server_config.password_hash}")
     print(f"Version: {server_config.version}")
 
