@@ -17,11 +17,14 @@ Usage:
 - python3 app.py <-- to run the application
 - apt install python3.10-venv
 """
-from flask import Flask, render_template, session, redirect, url_for, request, jsonify, flash
-from database.models import db, UsersModel
+from flask import Flask, render_template, session, redirect, url_for, request, jsonify, flash, abort
+from database.models import db, UsersModel, ChatModel
 from utils.encryption_tools import get_password_hash
 from config.server_config import ServerConfig
 from flask_sqlalchemy import SQLAlchemy
+from socket import inet_aton
+import argparse
+import traceback
 import os
 
 # Get current working directory
@@ -128,6 +131,9 @@ def user_action():
 
     global active_user_count
 
+    # Get necessary server configuration values
+    max_username_length = server_config.max_username_length()
+
     if request.method == 'POST':
 
         # Get username and password from the form
@@ -144,52 +150,48 @@ def user_action():
         # If validated
         if not password_match:  # username limits controlled by html
             flash('Invalid password', 'error')
-            return render_template('user_action.html')
 
         # If logging in
-        if action == 'login':
+        elif action == 'login':
 
             # If chat not full
             if MAX_USER_COUNT <= active_user_count:
                 flash('Chat room is full. Please try again later', 'error')
-                return render_template('user_action.html')
 
             # If user exist
-            if user:
+            elif user:
                 if 'username' not in session:
                     session['username'] = username
                     UsersModel.set_logged_in(app, username, True)
                     active_user_count += 1
                 return redirect(url_for('home'))
+
             else:
                 flash(f'Username: {username} does not exist. Please add user.')
-                return render_template('user_action.html')
 
         # If adding user
-        if action == 'add_user':
+        elif action == 'add_user':
             if user:
                 flash('User exists', 'error')
-                return render_template('user_action.html')
+
             else:
                 new_user = UsersModel(username=username)
                 UsersModel.add_user(app, new_user)
                 flash(f'User account created for: {username}. You may now login!')
-                return render_template('user_action.html')
 
         # User logout
-        if action == 'logout':
+        elif action == 'logout':
             if 'username' in session:
                 session.pop('username', None)
                 UsersModel.set_logged_in(app, username, False)
                 active_user_count -= 1
                 flash(f'User {username} has been logged out.', 'success')
-                return render_template('user_action.html')
+
             else:
                 flash(f'Username {username} does not have an active session.')
-                return render_template('user_action.html')
 
         # Delete user
-        if action == 'delete_user':
+        elif action == 'delete_user':
             if UsersModel.user_exists(app, username):
 
                 # Remove database entry for user
@@ -201,12 +203,11 @@ def user_action():
                     active_user_count -= 1
 
                 flash(f'User account {username} has been deleted.', 'success')
-                return render_template('user_action.html')
+
             else:
                 flash(f'Username {username} does not have an account.')
-                return render_template('user_action.html')
 
-    return render_template('user_action.html')
+    return render_template('user_action.html', max_username_length=max_username_length)
 
 
 @app.route('/ssh_key_loader')
@@ -218,21 +219,34 @@ def ssh_key_loader():
     Returns:
         render_template: The rendered SSH key uploader page template.
     """
-    
+
     return render_template('ssh_key_loader.html')
 
 
 @app.route('/chat')
 def chat():
-    """ 
-    Renders the chat interface for the Secure Chat Server. This endpoint
-    provides the main chat functionality of the application.
+    """
+    Author:
+        Eric Thomas
+
+    Description:
+        Renders the chat interface for the Secure Chat Server. This endpoint
+        provides the main chat functionality of the application.
 
     Returns:
-        render_template: The rendered chat page template.
+        render_template: The rendered chat page template with the user's username
+                         and maximum message length, if the user has permissions.
+        redirect: A redirection to the home page if the user does not have permissions.
     """
+
+    # Get the username
+    username = ''
+    if 'username' in session:
+        username = session['username']
+
     if verify_permissions():
-        return render_template('chat.html')
+        return render_template('chat.html', username=username, max_message_length=server_config.max_message_length(),
+                               encryption_enabled=server_config.encryption_enabled)
     else:
         return redirect(url_for('home'))
 
@@ -282,6 +296,60 @@ def update_encryption():
     return jsonify(success=False), 400
 
 
+@app.route('/submit_message', methods=['POST'])
+def submit_message():
+    """
+    Author:
+        Eric Thomas
+
+    Description:
+        Handles the submission of new chat messages sent from the client.
+
+    Returns:
+        jsonify: A JSON object indicating the success status of the message submission.
+    """
+    if not request.is_json:
+        # If the request does not contain JSON, return an error
+        return jsonify({"success": False, "error": "Invalid JSON format"}), 400
+
+    data = request.get_json()
+    user_id = data.get('user_id')
+    message_content = data.get('message_content')
+    message_encrypted = data.get('message_encrypted') == True  # will be false unless the string is 'True'
+
+    if not user_id or not message_content:
+        # If user_id or message_content is missing, return an error
+        return jsonify({"success": False, "error": "Missing user_id or message_content"}), 400
+
+    try:
+        ChatModel.add_new_message(app, user_id, message_content, message_encrypted)
+        return jsonify({"success": True})
+    except Exception as e:
+        # Log the exception and return an error message
+        print(f"Error adding message: {e}")
+        return jsonify({"success": False, "error": "Internal Server Error"}), 500
+
+
+@app.route('/get_messages', methods=['GET'])
+def get_messages():
+    """
+    Author:
+        Eric Thomas
+
+    Description:
+        Fetches and returns all chat messages from the database chat table.
+
+    Returns:
+        jsonify: A JSON list of dictionaries, each representing a chat message.
+    """
+
+    messages = ChatModel.query.order_by(ChatModel.timestamp.asc()).all()
+    messages_list = [{'user_id': message.user_id, 'message': message.message,
+                      'timestamp': message.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                      'encrypted': message.encrypted} for message in messages]
+    return jsonify(messages_list)
+
+
 def verify_permissions():
     """
     Author: 
@@ -319,5 +387,24 @@ def verify_permissions():
 if __name__ == '__main__':
     # Log all users out on startup
     UsersModel.set_all_users_logged_out(app)
-    app.run(debug=True)
-    # app.run(host="192.168.1.122", port=8080, debug=True)
+
+    # Setup argument parser
+    parser = argparse.ArgumentParser(description="Run the web application.")
+    parser.add_argument('--ip', type=str, help='The IP address to bind to.', default='127.0.0.1')
+    parser.add_argument('--port', type=int, help='The port to listen on.', default=5000)
+    args = parser.parse_args()
+
+    # Validate IP address
+    try:
+        inet_aton(args.ip)
+    except OSError:
+        print("Error: Invalid IP address format.")
+        sys.exit(1)
+
+    # Validate port number
+    if not (0 <= args.port <= 65535):
+        print("Error: Port number must be between 0 and 65535.")
+        sys.exit(1)
+
+    # Run the application
+    app.run(host=args.ip, port=args.port, debug=True)

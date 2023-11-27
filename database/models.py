@@ -1,6 +1,6 @@
 """
-Course Name: CMSC495 7384
-Project: CMSC495 Secure Chat Server
+Author: Eric Thomas
+Project: Secure Chat Server
 Group: A
 Date: Nov 23'
 Platform: Debian Linux
@@ -12,8 +12,9 @@ Secure Chat Server Database Models
 This module defines the SQLAlchemy models (tables) for the Secure Chat Server application.
 It includes the UsersModel and ChatModel classes for storing user and chat information.
 
-Dependencies:
-- Flask-SQLAlchemy
+TODO:
+- Getters for ChatModel
+- Make all attributes for ChatModel and UsersModel private
 """
 
 from flask import Flask
@@ -25,6 +26,7 @@ import sys
 import os
 from typing import NoReturn
 from sqlalchemy.orm import DeclarativeBase
+from datetime import datetime
 
 # append system path and import utils
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -47,11 +49,7 @@ db = SQLAlchemy(model_class=Base)
 
 class UsersModel(db.Model):
     """
-    Author:
-        Eric Thomas
-
-    Description:
-        SQLAlchemy Model for storing user information.
+    SQLAlchemy Model for storing user information.
     """
 
     __tablename__ = "users"
@@ -60,12 +58,20 @@ class UsersModel(db.Model):
     logged_in: Mapped[bool] = mapped_column(Boolean, default=False)
     ssh_key_setup: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    def __repr__(self) -> str:
+        """
+        Description:
+            Provides a string representation of the UsersModel instance.
+
+        Returns:
+            str: A string representation of the user instance.
+        """
+        return (f"<User(id={self.id}, username='{self.username}', "
+                f"logged_in={self.logged_in}, ssh_key_setup={self.ssh_key_setup})>")
+
     @staticmethod
     def add_user(app: Flask, user: 'UsersModel') -> NoReturn:
         """
-        Author:
-            Eric Thomas
-
         Description:
             Static method to add a new user to the database.
 
@@ -89,9 +95,6 @@ class UsersModel(db.Model):
     @staticmethod
     def remove_user(app: Flask, username: str) -> None:
         """
-        Author:
-            Eric Thomas
-
         Description:
             Remove a user from the database by their username.
 
@@ -116,9 +119,6 @@ class UsersModel(db.Model):
     @staticmethod
     def is_logged_in(app: Flask, username: str) -> bool:
         """
-        Author:
-            Eric Thomas
-
         Description:
             Static method to check if a user is logged_in.
 
@@ -136,9 +136,6 @@ class UsersModel(db.Model):
     @staticmethod
     def has_uploaded_ssh_key(app: Flask, username: str) -> bool:
         """
-        Author:
-            Eric Thomas
-
         Description:
             Static method to check if a user has uploaded an SSH key.
 
@@ -157,9 +154,6 @@ class UsersModel(db.Model):
     @staticmethod
     def get_user_entry(app: Flask, username: str) -> bool:
         """
-        Author:
-            Eric Thomas
-
         Description:
             Retrieve a user's database entry by username.
 
@@ -179,9 +173,6 @@ class UsersModel(db.Model):
     @staticmethod
     def user_exists(app: Flask, username: str) -> bool:
         """
-        Author:
-            Eric Thomas
-
         Description:
             Static method to verify if a user exists.
 
@@ -200,9 +191,6 @@ class UsersModel(db.Model):
     @staticmethod
     def set_ssh_key_setup(app: Flask, username: str, ssh_key_setup: bool) -> None:
         """
-        Author:
-            Eric Thomas
-
         Description:
             Static method to set the SSH key setup status for a user.
 
@@ -228,9 +216,6 @@ class UsersModel(db.Model):
     @staticmethod
     def set_logged_in(app: Flask, username: str, logged_in: bool) -> None:
         """
-        Author:
-            Eric Thomas
-
         Description:
             Static method to set the logged-in status for a user.
 
@@ -256,9 +241,6 @@ class UsersModel(db.Model):
     @staticmethod
     def set_all_users_logged_out(app: Flask) -> NoReturn:
         """
-        Author:
-            Eric Thomas
-
         Description:
             Static method to set the logged_in status to False for all
             users in the database.
@@ -281,23 +263,64 @@ class UsersModel(db.Model):
 
 class ChatModel(db.Model):
     """
-    Model for storing chat information.
-
-    Fields:
-    - id: Primary key for the chat record.
-    - message: The chat message.
-    - |user | message | message_id |
-    """
-
+    SQLAlchemy model for storing chat information.
     """
     __tablename__ = "chat"
-    """
-
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(ServerConfig.max_username_length()),
+                        nullable=False)
     message = db.Column(db.String(ServerConfig.max_message_length()), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    encrypted = db.Column(db.Boolean, default=False)
 
-    def __init__(self, message):
-        self.message = message
+    def __repr__(self):
+        """
+        Description:
+            Provides a string representation of a ChatModel instance.
+
+        Returns:
+            str: A string representation of the chat message.
+        """
+        MSG_SNIPPET_LENGTH = 25
+        msg_snippet = (self.message[:MSG_SNIPPET_LENGTH] +
+                       '...') if len(self.message) > MSG_SNIPPET_LENGTH else self.message
+        msg_snippet = "encrypted" if self.encrypted else msg_snippet
+        return f'<Chat {self.id} - User {self.user_id} - {self.timestamp}: "{msg_snippet}">'
+
+    @staticmethod
+    def check_and_remove_oldest_message(app: Flask):
+        """
+        Description:
+            Checks if the number of messages in the database has reached a limit and,
+            if so, removes the oldest message.
+
+        Args:
+            app (Flask): The Flask application instance.
+        """
+        with app.app_context():
+            if ChatModel.query.count() >= ServerConfig.max_message_count():
+                oldest_message = ChatModel.query.order_by(ChatModel.timestamp).first()
+                db.session.delete(oldest_message)
+                db.session.commit()
+
+    @staticmethod
+    def add_new_message(app: Flask, user_id: str, message_content: str, encrypted_flag: bool):
+        """
+        Description:
+            Adds a new message to the database and ensures that the total number of
+            messages does not exceed the set message count limit.
+
+        Args:
+            app (Flask): The Flask application instance.
+            user_id (str): The ID of the user sending the message.
+            message_content (str): The content of the message being sent.
+            encrypted_flag (bool): Indicates whether the message is encrypted.
+        """
+        with app.app_context():
+            ChatModel.check_and_remove_oldest_message(app)
+            new_message = ChatModel(user_id=user_id, message=message_content, encrypted=encrypted_flag)
+            db.session.add(new_message)
+            db.session.commit()
 
 
 if __name__ == '__main__':
@@ -308,7 +331,7 @@ if __name__ == '__main__':
     import shutil
 
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
     db.init_app(app)
 
     server_config = ServerConfig()
@@ -320,6 +343,8 @@ if __name__ == '__main__':
     # Adding users to the database
     with app.app_context():
         db.create_all()
+
+    # USERS MODEL TEST---------------------------------------------
 
     # Example usage for UsersModel class
     user1 = UsersModel(username="user1")
@@ -369,14 +394,43 @@ if __name__ == '__main__':
     if not UsersModel.user_exists(app, username):
         print(f"User entry: {username} was successfully removed.")
 
+    # CHAT MODEL TEST-------------------------------------------------------
+    user_id = 1
+    message_content = "Hello, chat!"
+
+    # Add a new chat message to the chat database
+    ChatModel.add_new_message(app, user_id, message_content, True)
+
+    # Retrieve and print the chat messages from the chat database
+    with app.app_context():
+        messages = ChatModel.query.all()
+        for message in messages:
+            print(f"Message ID: {message.id}")
+            print(f"User ID: {message.user_id}")
+            print(f"Message: {message.message}")
+            print(f"Timestamp: {message.timestamp}")
+            print(f"Is Encrypted: {message.encrypted}")
+            print()
+
+    # Show message count control
+    exceed_value = 20
+    for i in range(ServerConfig.max_message_count() + exceed_value):
+        ChatModel.add_new_message(app, user_id, message_content, False)
+
+    with app.app_context():
+        messages = ChatModel.query.all()
+        msg_cnt = len(messages)
+        print(f"Added {exceed_value} in excess of the message storage limit of {ServerConfig.max_message_count()}")
+        print(f"There are {msg_cnt} messages in the database.")
+
     # Delete the test database file
     cwd = os.path.abspath(os.path.dirname(__file__))
     db_dir_path_1 = os.path.join(cwd, '..', 'instance')
     db_dir_path_2 = os.path.join(cwd, 'instance')
     if os.path.exists(db_dir_path_1):
         shutil.rmtree(db_dir_path_1)
-        print(f"Deleted the test database dir: {db_dir_path}")
+        print(f"Deleted the test database dir: {db_dir_path_1}")
 
     if os.path.exists(db_dir_path_2):
         shutil.rmtree(db_dir_path_2)
-        print(f"Deleted the test database dir: {db_dir_path}")
+        print(f"Deleted the test database dir: {db_dir_path_2}")
