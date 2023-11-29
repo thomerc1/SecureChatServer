@@ -1,3 +1,10 @@
+
+/*
+@Samuel Ze;leke
+
+hide secret messages within the visual appearance of the application
+opacity can provide advantages in terms of hiding messages within a secure messaging app
+*/
 .cont {
     display: flex;
     height: 90vh;
