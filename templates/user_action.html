@@ -1,0 +1,86 @@
+<!--
+    ==========================================
+    Course Name: CMSC495 7384
+    Author: Eric Thomas
+    Group: A
+    Date: Nov 23'
+    Project: CMSC495 Secure Chat Server
+    Platform: Debian Linux
+    ==========================================
+    Description:
+    HTML template defining the content of the user_action page for the
+    Secure Messaging Server. It includes buttons to login, add a user,
+    log out, and delete a user. It also prints flash messages.
+    ==========================================
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Action Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Secure Chat Server</h1>
+    <p>User Login and Account Creation page</p>
+
+    <form id="userActionForm" action="/user_action" method="post">
+        <div class="form-group">
+            <label for="username">Enter your username:</label>
+            <input type="text" id="username" name="username" placeholder="Username"
+                maxlength="{{ max_username_length }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Enter the encryption pw:</label>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+        </div>
+
+        <div class="button-group">
+            <button type="submit" class="btn" name="action" value="login">Login</button>
+            <button type="submit" class="btn" name="action" value="add_user">Add User</button>
+            <button type="submit" class="btn" name="action" value="logout">Log out</button>
+            <button type="submit" class="btn" name="action" value="delete_user">Delete User</button>
+        </div>
+    </form>
+
+    <!-- Script for pulling out the password and storing to the session for use in encryption functions -->
+    <script>
+        document.getElementById("userActionForm").addEventListener("submit", function (event) {
+
+            // Pull the password from the input field
+            var password = document.getElementById("password").value;
+
+            // Store the password in sessionStorage
+            sessionStorage.setItem("encryptionKey", password);
+            console.log("Key stored in sessionStorage:", sessionStorage.getItem("encryptionKey"));
+        });
+    </script>
+
+
+    <!-- Flash message(s) -->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message[1] }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+</body>
+
+</html>
