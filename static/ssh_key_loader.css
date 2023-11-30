@@ -1,0 +1,39 @@
+
+/*
+Course Name: CMSC495 7384
+    Author: @Samuel Zeleke
+    Group: A
+    Date: Nov 23'
+    Project: CMSC495 Secure Chat Server
+hide secret messages within the visual appearance of the application
+opacity can provide advantages in terms of hiding messages within a secure messaging app
+*/
+.cont {
+    display: flex;
+    height: 90vh;
+    width: 100vw;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.img-cont {
+    margin-top: 5rem;
+    display: flex;
+
+}
+
+.img1 {
+    margin-right: 15rem;
+    margin-bottom: 10rem;
+}
+
+img {
+    width: 300px;
+}
+
+
+.opa {
+    opacity: 0;
+    width: 10px;
+}
