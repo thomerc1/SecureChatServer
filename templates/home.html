@@ -65,14 +65,14 @@
 
     {% if session.username %}
     <!-- Toggle switches for SSH authentication and SHA-256 encryption -->
-    <label class="toggle-label">Enable SSH Authentication:</label>
+    <label class="toggle-label">SSH Authentication:</label>
     <label class="toggle-switch">
         <input type="checkbox" class="toggle-input" id="ssh-switch" {% if server_config.ssh_enabled %}checked{% endif %}
             onchange="updateSSH()">
         <span class="toggle-slider"></span>
     </label>
 
-    <label class="toggle-label">Enable SHA-256 Encryption:</label>
+    <label class="toggle-label">AES Message Encryption:</label>
     <label class="toggle-switch">
         <input type="checkbox" class="toggle-input" id="encryption-switch" {% if server_config.encryption_enabled
             %}checked{% endif %} onchange="updateEncryption()">
